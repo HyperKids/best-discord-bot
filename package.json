@@ -1,0 +1,15 @@
+{
+  "name": "best-discord-bot",
+  "version": "1.0.0",
+  "description": "Bot for Brown Esports' Discord",
+  "main": "index.js",
+  "repository": "https://github.com/HyperKids/best-discord-bot",
+  "author": "Isaac Kim",
+  "license": "none",
+  "private": true,
+  "dependencies": {
+    "discord.io": "woor/discord.io#gateway_v6",
+    "dotenv": "^8.2.0",
+    "winston": "^3.2.1"
+  }
+}

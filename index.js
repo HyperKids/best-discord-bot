@@ -1,0 +1,377 @@
+require("dotenv").config();
+var Discord = require("discord.io");
+var logger = require("winston");
+var bot = new Discord.Client({
+  token: process.env.DISCORDBOTTOKEN,
+  autorun: true,
+});
+var prefix = "^";
+
+logger.remove(logger.transports.Console);
+logger.add(new logger.transports.Console(), {
+  colorize: true,
+});
+logger.level = "debug";
+
+bot.on("ready", function (evt) {
+  logger.info(bot.username + " - (" + bot.id + ")");
+  bot.setPresence({
+    game: {
+      name: "Blueno ;)",
+      type: 3,
+    },
+  });
+  setCounter();
+
+  var memberCount = bot.servers["442754791563722762"].member_count;
+  logger.info("Member Count: " + memberCount);
+});
+
+bot.on("message", function (user, userID, channelID, message, evt) {
+  if (userID != "720120584155168771") {
+    if (message.substring(0, 1) == ";") {
+      var args = message.substring(1).split(" ");
+      var cmd = args[0];
+      args = args.splice(1);
+      var cl = message.substring(1).split("|");
+      var cld = cl[0];
+      clargs = cl.splice(1);
+
+      var serverID = bot.channels[channelID].guild_id;
+      var listOf = bot.servers[serverID].members[userID];
+
+      if (listOf != undefined) {
+        var listOfRoles = listOf.roles;
+        //var isHyper = listOfRoles.includes('312745825237467136');
+        var isHyper = false;
+        var isPresident = listOfRoles.includes("445482959085240331");
+        var isEboard = listOfRoles.includes("442756821590081537");
+        var isPastEboard = listOfRoles.includes("588114684318580770");
+
+        if (userID == "196685652249673728") {
+          isHyper = true;
+        }
+      }
+
+      switch (cmd) {
+        case "purge":
+          if (isHyper || isPresident) {
+            var bl = [];
+            deletemsg(channelID, evt.d.id, 0);
+            bot.getMessages(
+              {
+                channelID: channelID,
+                limit: parseInt(args[0]) + 1,
+              },
+              function (e, a) {
+                //console.log(args[0]);
+                for (i = 0; i < a.length; i++) {
+                  bl.push(a[i].id);
+                }
+                //console.log(bl);
+                bot.deleteMessages({
+                  channelID: channelID,
+                  messageIDs: bl,
+                });
+              }
+            );
+          } else {
+            deletemsg(channelID, evt.d.id, 0);
+            noperm(channelID, evt.d.id);
+          }
+
+          break;
+        case "bc":
+          if (isHyper || isPresident || isEboard) {
+            bot.sendMessage({
+              to: channelID,
+              embed: {
+                color: 0x2f190e,
+                title: message.substring(4),
+                footer: {
+                  icon_url:
+                    "https://cdn.discordapp.com/avatars/" +
+                    userID +
+                    "/" +
+                    bot.users[userID].avatar,
+                  text: "Broadcast issued by " + user,
+                },
+              },
+            });
+            deletemsg1(channelID, evt.d.id, 0);
+          } else {
+            deletemsg(channelID, evt.d.id, 5000);
+            noperm(channelID, evt.d.id);
+          }
+
+          break;
+        case "kill":
+          if (isHyper) {
+            success(channelID, evt.d.id);
+            bot.disconnect();
+            process.exit();
+          } else {
+            noperm(channelID, userID);
+          }
+
+          break;
+        case "noperm":
+          noperm(channelID, evt.d.id);
+          break;
+        case "changelog":
+          if (isHyper) {
+            console.log(clargs)
+            bot.sendMessage({
+              to: channelID,
+              message: "",
+              embed: {
+                color: 0x972525,
+                title: clargs[0],
+                description: clargs[1],
+                timestamp: new Date(),
+                author: {
+                  //name: user,
+                  name: "Griffin Beels and Isaac Kim",
+                  icon_url:
+                    /*"https://cdn.discordapp.com/avatars/" +
+                    userID +
+                    "/" +
+                    bot.users[userID].avatar,*/
+                    "https://media.discordapp.net/attachments/611791584190791682/720167116741017620/unknown.png",
+                },
+                footer: {
+                  icon_url:
+                    "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
+                  text: "* = Head",
+                },
+                fields: [
+                  {
+                    name: clargs[2],
+                    value: clargs[3],
+                    inline: clargs[4],
+                  },
+                  {
+                    name: clargs[5],
+                    value: clargs[6],
+                    inline: clargs[7],
+                  },
+                  {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: true
+                  },
+                  {
+                    name: clargs[8],
+                    value: clargs[9],
+                    inline: clargs[10],
+                  },
+                  {
+                    name: clargs[11],
+                    value: clargs[12],
+                    inline: clargs[13],
+                  },
+                  {
+                    name: clargs[14],
+                    value: clargs[15],
+                    inline: clargs[16],
+                  },
+                  {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: true
+                  },
+                  {
+                    name: clargs[17],
+                    value: clargs[18],
+                    inline: clargs[19],
+                  },
+                  {
+                    name: clargs[20],
+                    value: clargs[21],
+                    inline: clargs[22],
+                  },
+                  {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: true
+                  },
+                  {
+                    name: clargs[23],
+                    value: clargs[24],
+                    inline: clargs[25],
+                  },
+                  {
+                    name: clargs[26],
+                    value: clargs[27],
+                    inline: clargs[28],
+                  },
+                  {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: true
+                  },
+                  {
+                    name: clargs[29],
+                    value: clargs[30],
+                    inline: clargs[31],
+                  },
+                  {
+                    name: clargs[32],
+                    value: clargs[33],
+                    inline: clargs[34],
+                  },
+                  {
+                    name: "\u200B",
+                    value: "\u200B",
+                    inline: true
+                  },
+                ],
+              }, //-changelog |1|2|3|true|5|6|7|true|8|9|true
+            });
+            deletemsg(channelID, evt.d.id, 0);
+          } else {
+            deletemsg(channelID, evt.d.id, 5000);
+            noperm(channelID, evt.d.id);
+          }
+          break;
+      }
+    }
+  }
+
+  // The Counting Game
+  if (channelID == "720133492939161661") {
+    if (isNaN(message)) {
+      bot.sendMessage({
+        to: userID,
+        message: "Please only type consecutive numbers in The Counting Game.",
+      });
+      deletemsg1(channelID, evt.d.id, 0);
+    } else if (userID == lastUser) {
+      bot.sendMessage({
+        to: userID,
+        message:
+          "Please do not send consecutive messages in The Counting Game.",
+      });
+      deletemsg1(channelID, evt.d.id, 0);
+    } else {
+      isLastNum(channelID, evt.d.id, userID);
+    }
+  }
+});
+
+bot.on("disconnect", function (msg, code) {
+  if (code === 0) return console.error(msg);
+  bot.connect();
+});
+
+// The Counting Game
+function setCounter() {
+  bot.getMessages(
+    {
+      channelID: "720133492939161661",
+      limit: 2,
+    },
+    function (e, m) {
+      setTimeout(function () {
+        if (isNaN(parseInt(m[0].content))) {
+          bot.deleteMessage({
+            channelID: "720133492939161661",
+            messageID: m[0].id,
+          });
+          setCounter();
+        } else {
+          ccounter = parseInt(m[0].content);
+          lcounter = parseInt(m[1].content);
+          if (parseInt(ccounter) != parseInt(lcounter) + 1) {
+            bot.deleteMessage({
+              channelID: "720133492939161661",
+              messageID: m[0].id,
+            });
+            setCounter();
+          } else {
+            counter = parseInt(m[0].content);
+            lastUser = m[0].author.id;
+            logger.info("Last Counting Game Number: " + counter + "");
+            //console.log(lastUser);
+          }
+        }
+      }, 1000);
+    }
+  );
+}
+
+function isLastNum(channelID, messageID, userID) {
+  bot.getMessages(
+    {
+      channelID: "720133492939161661",
+      limit: 2,
+    },
+    function (e, m) {
+      ccounter = parseInt(m[0].content);
+      lcounter = parseInt(m[1].content);
+      if (parseInt(ccounter) != parseInt(lcounter) + 1) {
+        bot.sendMessage({
+          to: userID,
+          message: "Please only type consecutive numbers in The Counting Game.",
+        });
+        deletemsg1(channelID, messageID, 0);
+      } else {
+        lastUser = userID;
+      }
+    }
+  );
+}
+
+// Utilities
+function deletemsg(channelID, messageID, length) {
+  /*setTimeout(function() {
+      bot.deleteMessage({
+          channelID: channelID,
+          messageID: messageID
+      })
+  }, length);*/
+}
+
+function deletemsg1(channelID, messageID, length) {
+  setTimeout(function () {
+    bot.deleteMessage({
+      channelID: channelID,
+      messageID: messageID,
+    });
+  }, length);
+}
+
+function noperm(channelID, id) {
+  bot.sendMessage({
+      to: channelID,
+      embed: {
+          color: 0x25A397,
+          title: 'I\'m sorry, but you don\'t have permission to do that.',
+          footer: {
+              icon_url: 'https://cdn.discordapp.com/attachments/312758904821907456/405511101934075924/og_image.png',
+              text: 'Message auto-generated by BESTBot',
+          }
+      }
+  });
+  /*setTimeout(function() {
+      bot.deleteMessage({
+          channelID: channelID,
+          messageID: id
+      })
+  }, 5000);*/
+}
+
+function success(channelID, messageID) {
+  bot.addReaction({
+    channelID: channelID,
+    messageID: messageID,
+    reaction: ":greenTick:407311488013828119",
+  });
+}
+function failure(channelID, messageID) {
+  bot.addReaction({
+    channelID: channelID,
+    messageID: evt.d.id,
+    reaction: ":redTick:407311235822911488",
+  });
+}
