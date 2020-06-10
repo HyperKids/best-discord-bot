@@ -17,11 +17,12 @@ bot.on("ready", function (evt) {
   logger.info(bot.username + " - (" + bot.id + ")");
   bot.setPresence({
     game: {
-      name: "Blueno ;)",
+      name: "Brown Esports",
       type: 3,
     },
   });
   setCounter();
+  setCounterFragile();
 
   var memberCount = bot.servers["442754791563722762"].member_count;
   logger.info("Member Count: " + memberCount);
@@ -123,7 +124,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
             console.log(clargs)
             bot.sendMessage({
               to: channelID,
-              message: "",
+              message: "@everyone Please welcome our 2020-2021 Eboard!",
               embed: {
                 color: 0x972525,
                 title: clargs[0],
@@ -225,6 +226,11 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                     value: "\u200B",
                     inline: true
                   },
+                  {
+                    name: clargs[35],
+                    value: clargs[36],
+                    inline: clargs[37],
+                  },
                 ],
               }, //-changelog |1|2|3|true|5|6|7|true|8|9|true
             });
@@ -238,15 +244,35 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     }
   }
 
-  // The Counting Game
+  // The Counting Game Infinity
   if (channelID == "720133492939161661") {
-    if (isNaN(message)) {
+    if (isNaN(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
-        message: "Please only type consecutive numbers in The Counting Game.",
+        message: "Please only type consecutive numbers in The Counting Game ∞.",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else if (userID == lastUser) {
+      bot.sendMessage({
+        to: userID,
+        message:
+          "Please do not send consecutive messages in The Counting Game ∞.",
+      });
+      deletemsg1(channelID, evt.d.id, 0);
+    } else {
+      isLastNum(channelID, evt.d.id, userID);
+    }
+  }
+
+  // Fragile Counting Game
+  if (channelID == "720323796111851572") {
+    if (isNaN(message.split(" ")[0])) {
+      bot.sendMessage({
+        to: userID,
+        message: "Make sure the first word of your message is a number!",
+      });
+      deletemsg1(channelID, evt.d.id, 0);
+    } else if (userID == lastUserFragile) {
       bot.sendMessage({
         to: userID,
         message:
@@ -254,7 +280,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
-      isLastNum(channelID, evt.d.id, userID);
+      isLastNumFragile(channelID, evt.d.id, userID);
     }
   }
 });
@@ -300,6 +326,41 @@ function setCounter() {
   );
 }
 
+function setCounterFragile() {
+  bot.getMessages(
+    {
+      channelID: "720323796111851572",
+      limit: 2,
+    },
+    function (e, m) {
+      setTimeout(function () {
+        if (isNaN(parseInt(m[0].content))) {
+          bot.deleteMessage({
+            channelID: "720323796111851572",
+            messageID: m[0].id,
+          });
+          setCounterFragile();
+        } else {
+          //ccounter = parseInt(m[0].content);
+          //lcounter = parseInt(m[1].content);
+          //if (parseInt(ccounter) != parseInt(lcounter) + 1) {
+          //  bot.deleteMessage({
+          //    channelID: "720323796111851572",
+          //    messageID: m[0].id,
+          //  });
+          //  setCounter();
+          //} else {
+            counter = parseInt(m[0].content);
+            lastUserFragile = m[0].author.id;
+            logger.info("Last Counting Game Number: " + counter + "");
+            //console.log(lastUser);
+          //}
+        }
+      }, 1000);
+    }
+  );
+}
+
 function isLastNum(channelID, messageID, userID) {
   bot.getMessages(
     {
@@ -317,6 +378,30 @@ function isLastNum(channelID, messageID, userID) {
         deletemsg1(channelID, messageID, 0);
       } else {
         lastUser = userID;
+      }
+    }
+  );
+}
+
+function isLastNumFragile(channelID, messageID, userID) {
+  bot.getMessages(
+    {
+      channelID: "720323796111851572",
+      limit: 2,
+    },
+    function (e, m) {
+      ccounter = parseInt(m[0].content);
+      lcounter = parseInt(m[1].content);
+      if (parseInt(ccounter) != parseInt(lcounter) + 1) {
+        if (parseInt(ccounter) !== 0) {
+          bot.sendMessage({
+            to: "720323796111851572",
+            message: "0 <@"+userID+"> broke the "+lcounter+" long chain by typing "+ccounter+"! Starting from the top.",
+          });
+          //deletemsg1(channelID, messageID, 0);
+        }        
+      } else {
+        lastUserFragile = userID;
       }
     }
   );
