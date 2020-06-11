@@ -29,7 +29,7 @@ bot.on("ready", function (evt) {
 });
 
 bot.on("message", function (user, userID, channelID, message, evt) {
-  if (userID != "720120584155168771") {
+  if (userID != "720120584155168771" && evt.d.type == 0) {
     if (message.substring(0, 1) == ";") {
       var args = message.substring(1).split(" ");
       var cmd = args[0];
@@ -43,7 +43,6 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 
       if (listOf != undefined) {
         var listOfRoles = listOf.roles;
-        //var isHyper = listOfRoles.includes('312745825237467136');
         var isHyper = false;
         var isPresident = listOfRoles.includes("445482959085240331");
         var isEboard = listOfRoles.includes("442756821590081537");
@@ -65,11 +64,9 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                 limit: parseInt(args[0]) + 1,
               },
               function (e, a) {
-                //console.log(args[0]);
                 for (i = 0; i < a.length; i++) {
                   bl.push(a[i].id);
                 }
-                //console.log(bl);
                 bot.deleteMessages({
                   channelID: channelID,
                   messageIDs: bl,
@@ -121,7 +118,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
           break;
         case "changelog":
           if (isHyper) {
-            console.log(clargs)
+            console.log(clargs);
             bot.sendMessage({
               to: channelID,
               message: "@everyone Please welcome our 2020-2021 Eboard!",
@@ -159,7 +156,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                   {
                     name: "\u200B",
                     value: "\u200B",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: clargs[8],
@@ -179,7 +176,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                   {
                     name: "\u200B",
                     value: "\u200B",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: clargs[17],
@@ -194,7 +191,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                   {
                     name: "\u200B",
                     value: "\u200B",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: clargs[23],
@@ -209,7 +206,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                   {
                     name: "\u200B",
                     value: "\u200B",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: clargs[29],
@@ -224,7 +221,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
                   {
                     name: "\u200B",
                     value: "\u200B",
-                    inline: true
+                    inline: true,
                   },
                   {
                     name: clargs[35],
@@ -275,12 +272,11 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     } else if (userID == lastUserFragile) {
       bot.sendMessage({
         to: userID,
-        message:
-          "Please do not send consecutive messages in The Counting Game.",
+        message: "Please only send consecutive messages in The Counting Game.",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
-      isLastNumFragile(channelID, evt.d.id, userID);
+      isLastNumFragile(channelID, evt.d.id, userID, evt.d.type);
     }
   }
 });
@@ -318,7 +314,6 @@ function setCounter() {
             counter = parseInt(m[0].content);
             lastUser = m[0].author.id;
             logger.info("Last Counting Game Number: " + counter + "");
-            //console.log(lastUser);
           }
         }
       }, 1000);
@@ -341,40 +336,31 @@ function setCounterFragile() {
           });
           setCounterFragile();
         } else {
-          //ccounter = parseInt(m[0].content);
-          //lcounter = parseInt(m[1].content);
-          //if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-          //  bot.deleteMessage({
-          //    channelID: "720323796111851572",
-          //    messageID: m[0].id,
-          //  });
-          //  setCounter();
-          //} else {
-            counter = parseInt(m[0].content);
-            lastUserFragile = m[0].author.id;
-            logger.info("Last Counting Game Number: " + counter + "");
-            //console.log(lastUser);
-          //}
+          counter = parseInt(m[0].content);
+          lastUserFragile = m[0].author.id;
+          logger.info("Last Counting Game Number: " + counter + "");
         }
-      }, 1000);
+      }, 10);
     }
   );
 }
 
-function isLastNum(channelID, messageID, userID) {
+function isLastNum(channelID, messageID, userID, type) {
   bot.getMessages(
     {
       channelID: "720133492939161661",
       limit: 2,
     },
     function (e, m) {
-      ccounter = parseInt(m[0].content);
-      lcounter = parseInt(m[1].content);
+      ccounter = parseInt(m[0].content); //m[0] returns the newest message
+      lcounter = parseInt(m[1].content); //m[1] returns the second newest message
       if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-        bot.sendMessage({
-          to: userID,
-          message: "Please only type consecutive numbers in The Counting Game.",
-        });
+        if (type == 0) {
+          bot.sendMessage({
+            to: userID,
+            message: "Please only type consecutive numbers in The Counting Game.",
+          });
+        }
         deletemsg1(channelID, messageID, 0);
       } else {
         lastUser = userID;
@@ -383,7 +369,7 @@ function isLastNum(channelID, messageID, userID) {
   );
 }
 
-function isLastNumFragile(channelID, messageID, userID) {
+function isLastNumFragile(channelID, messageID, userID, type) {
   bot.getMessages(
     {
       channelID: "720323796111851572",
@@ -393,13 +379,24 @@ function isLastNumFragile(channelID, messageID, userID) {
       ccounter = parseInt(m[0].content);
       lcounter = parseInt(m[1].content);
       if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-        if (parseInt(ccounter) !== 0) {
-          bot.sendMessage({
-            to: "720323796111851572",
-            message: "0 <@"+userID+"> broke the "+lcounter+" long chain by typing "+ccounter+"! Starting from the top.",
-          });
-          //deletemsg1(channelID, messageID, 0);
-        }        
+        if (/*parseInt(ccounter) !== 0 &&*/ userID !== "720120584155168771" && ccounter !== NaN) {
+          if (type == 0) {
+            bot.sendMessage({
+              to: "720323796111851572",
+              message:
+                "0 <@" +
+                userID +
+                "> broke the " +
+                lcounter +
+                " long chain by typing " +
+                ccounter +
+                "! Starting from the top.",
+            });
+          } else if (type == 6) {
+            deletemsg1(channelID, messageID, 0);
+          }
+          //deletemsg1(channelID, messageID, 0);}
+        }
       } else {
         lastUserFragile = userID;
       }
@@ -428,15 +425,16 @@ function deletemsg1(channelID, messageID, length) {
 
 function noperm(channelID, id) {
   bot.sendMessage({
-      to: channelID,
-      embed: {
-          color: 0x25A397,
-          title: 'I\'m sorry, but you don\'t have permission to do that.',
-          footer: {
-              icon_url: 'https://cdn.discordapp.com/attachments/312758904821907456/405511101934075924/og_image.png',
-              text: 'Message auto-generated by BESTBot',
-          }
-      }
+    to: channelID,
+    embed: {
+      color: 0x25a397,
+      title: "I'm sorry, but you don't have permission to do that.",
+      footer: {
+        icon_url:
+          "https://cdn.discordapp.com/attachments/312758904821907456/405511101934075924/og_image.png",
+        text: "Message auto-generated by BESTBot",
+      },
+    },
   });
   /*setTimeout(function() {
       bot.deleteMessage({
