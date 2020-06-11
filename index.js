@@ -362,6 +362,8 @@ function isLastNum(channelID, messageID, userID, type) {
           });
         }
         deletemsg1(channelID, messageID, 0);
+      } else if (false) {
+
       } else {
         lastUser = userID;
       }
