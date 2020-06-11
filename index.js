@@ -113,6 +113,20 @@ bot.on("message", function (user, userID, channelID, message, evt) {
           }
 
           break;
+        case "resetpin":
+          bot.deletePinnedMessage(
+            {
+              channelID: "720133492939161661",
+              messageID: "720133540137664603",
+            },
+            function (e) {
+              bot.pinMessage({
+                channelID: "720133492939161661",
+                messageID: "720133540137664603",
+              });
+            }
+          );
+          break;
         case "noperm":
           noperm(channelID, evt.d.id);
           break;
@@ -257,7 +271,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
-      isLastNum(channelID, evt.d.id, userID);
+      isLastNum(channelID, evt.d.id, userID, evt.d.type);
     }
   }
 
@@ -352,18 +366,39 @@ function isLastNum(channelID, messageID, userID, type) {
       limit: 2,
     },
     function (e, m) {
-      ccounter = parseInt(m[0].content); //m[0] returns the newest message
-      lcounter = parseInt(m[1].content); //m[1] returns the second newest message
+      ccounter = parseInt(m[0].content.split(" ")[0]); //m[0] returns the newest message
+      lcounter = parseInt(m[1].content.split(" ")[0]); //m[1] returns the second newest message
       if (parseInt(ccounter) != parseInt(lcounter) + 1) {
         if (type == 0) {
           bot.sendMessage({
             to: userID,
-            message: "Please only type consecutive numbers in The Counting Game.",
+            message:
+              "Please only type consecutive numbers in The Counting Game ∞.",
           });
         }
         deletemsg1(channelID, messageID, 0);
-      } else if (false) {
-
+      } else if (parseInt(ccounter) % 100 === 0) {
+        bot.deletePinnedMessage(
+          {
+            channelID: "720133492939161661",
+            messageID: "720133540137664603",
+          },
+          function (e) {
+            bot.pinMessage({
+              channelID: "720133492939161661",
+              messageID: "720133540137664603",
+            });
+          }
+        );
+        bot.pinMessage({
+          channelID: channelID,
+          messageID: messageID,
+        });
+        bot.pinMessage({
+          channelID: "720133492939161661",
+          messageID: "720133540137664603",
+        });
+        lastUser = userID;
       } else {
         lastUser = userID;
       }
@@ -378,10 +413,13 @@ function isLastNumFragile(channelID, messageID, userID, type) {
       limit: 2,
     },
     function (e, m) {
-      ccounter = parseInt(m[0].content);
-      lcounter = parseInt(m[1].content);
+      ccounter = parseInt(m[0].content.split(" ")[0]);
+      lcounter = parseInt(m[1].content.split(" ")[0]);
       if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-        if (/*parseInt(ccounter) !== 0 &&*/ userID !== "720120584155168771" && ccounter !== NaN) {
+        if (
+          /*parseInt(ccounter) !== 0 &&*/ userID !== "720120584155168771" &&
+          ccounter !== NaN
+        ) {
           if (type == 0) {
             bot.sendMessage({
               to: "720323796111851572",
