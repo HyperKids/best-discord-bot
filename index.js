@@ -17,7 +17,7 @@ bot.on("ready", function (evt) {
   logger.info(bot.username + " - (" + bot.id + ")");
   bot.setPresence({
     game: {
-      name: "Brown Esports",
+      name: "the BEST server!",
       type: 3,
     },
   });
