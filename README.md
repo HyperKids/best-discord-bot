@@ -5,7 +5,7 @@ This is a private bot for [Brown Esports](https://brownesports.org). Most of thi
 This project's official formatter is **Prettier**.
 This project's official package manager is **Yarn**.
 
-To contribute, clone the repository, execute `yarn`, then `yarn start`.
+To contribute, clone the repository, execute `yarn`, copy `.env.example` into `.env`, add your Discord Bot token, then execute `yarn start`.
 
 Every time you pull from the repository, execute `yarn`, then `yarn start`.
 
