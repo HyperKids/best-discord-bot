@@ -114,21 +114,25 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 
           break;
         case "resetpin":
-          bot.deletePinnedMessage(
-            {
-              channelID: "720133492939161661",
-              messageID: "720133540137664603",
-            },
-            function (e) {
-              bot.pinMessage({
+          if (isHyper) {
+            bot.deletePinnedMessage(
+              {
                 channelID: "720133492939161661",
                 messageID: "720133540137664603",
-              });
-            }
-          );
+              },
+              function (e) {
+                bot.pinMessage({
+                  channelID: "720133492939161661",
+                  messageID: "720133540137664603",
+                });
+              }
+            );
+          }
           break;
         case "noperm":
-          noperm(channelID, evt.d.id);
+          if (isHyper) {
+            noperm(channelID, evt.d.id);
+          }
           break;
         case "changelog":
           if (isHyper) {
@@ -260,14 +264,14 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     if (isNaN(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
-        message: "Please only type consecutive numbers in The Counting Game ∞.",
+        message: "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `"+message+"`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else if (userID == lastUser) {
       bot.sendMessage({
         to: userID,
         message:
-          "Please do not send consecutive messages in The Counting Game ∞.",
+          "Please do not send consecutive messages in The Counting Game ∞. Your deleted message: `"+message+"`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
@@ -373,7 +377,7 @@ function isLastNum(channelID, messageID, userID, type) {
           bot.sendMessage({
             to: userID,
             message:
-              "Please only type consecutive numbers in The Counting Game ∞.",
+              "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `"+m[0].content+"`",
           });
         }
         deletemsg1(channelID, messageID, 0);
