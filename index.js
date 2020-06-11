@@ -284,13 +284,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     if (isNaN(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
-        message: "Make sure the first word of your message is a number!",
-      });
-      deletemsg1(channelID, evt.d.id, 0);
-    } else if (userID == lastUserFragile) {
-      bot.sendMessage({
-        to: userID,
-        message: "Please only send consecutive messages in The Counting Game.",
+        message: "Make sure the first word of your message is a number! Your deleted message: `"+message+"`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
