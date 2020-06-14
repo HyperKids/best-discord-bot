@@ -264,14 +264,19 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     if (isNaN(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
-        message: "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `"+message+"`",
+        message:
+          "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `" +
+          message +
+          "`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else if (userID == lastUser) {
       bot.sendMessage({
         to: userID,
         message:
-          "Please do not send consecutive messages in The Counting Game ∞. Your deleted message: `"+message+"`",
+          "Please do not send consecutive messages in The Counting Game ∞. Your deleted message: `" +
+          message +
+          "`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
@@ -284,18 +289,23 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     if (isNaN(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
-        message: "Make sure the first word of your message is a number! Your deleted message: `"+message+"`",
+        message:
+          "Make sure the first word of your message is a number! Your deleted message: `" +
+          message +
+          "`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else if (userID == lastUserFragile) {
       bot.sendMessage({
         to: userID,
         message:
-          "Please do not send consecutive messages in The Hardcore Counting Game. Your deleted message: `"+message+"`",
+          "Please do not send consecutive messages in The Hardcore Counting Game. Your deleted message: `" +
+          message +
+          "`",
       });
       deletemsg1(channelID, evt.d.id, 0);
     } else {
-      isLastNumFragile(channelID, evt.d.id, userID, evt.d.type);
+      isLastNumFragile(channelID, evt.d.id, userID, evt.d.type, evt); // I know this is terrible, I don't want to refactor now
     }
   }
 });
@@ -378,7 +388,9 @@ function isLastNum(channelID, messageID, userID, type) {
           bot.sendMessage({
             to: userID,
             message:
-              "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `"+m[0].content+"`",
+              "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `" +
+              m[0].content +
+              "`",
           });
         }
         deletemsg1(channelID, messageID, 0);
@@ -411,7 +423,7 @@ function isLastNum(channelID, messageID, userID, type) {
   );
 }
 
-function isLastNumFragile(channelID, messageID, userID, type) {
+function isLastNumFragile(channelID, messageID, userID, type, evt) {
   bot.getMessages(
     {
       channelID: "720323796111851572",
@@ -437,6 +449,30 @@ function isLastNumFragile(channelID, messageID, userID, type) {
                 ccounter +
                 "! Starting from the top.",
             });
+            var duncearr = Object.values(bot.servers[evt.d.guild_id].members)
+              .filter((m) => m.roles.includes("721563745343504384"))
+              .map((m) => m.id);
+            duncearr.forEach((dunceid, i) => {
+              bot.removeFromRole({
+                serverID: evt.d.guild_id,
+                userID: dunceid,
+                roleID: "721563745343504384",
+              });
+              if (duncearr.length = i + 1) {
+                bot.addToRole({
+                  serverID: evt.d.guild_id,
+                  userID: userID,
+                  roleID: "721563745343504384",
+                });
+              }
+            });
+            if (duncearr.length == 0) {
+              bot.addToRole({
+                serverID: evt.d.guild_id,
+                userID: userID,
+                roleID: "721563745343504384",
+              });
+            }
           } else if (type == 6) {
             deletemsg1(channelID, messageID, 0);
           }
