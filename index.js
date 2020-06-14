@@ -505,12 +505,23 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 
 function dunceCheck() {
   // check for dunce role and remove it if it's >1d
-  fs.readFile("dunce-timestamp.txt", "utf8", function (err, data) {
-    if (err) return console.log(err);
-    if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
-      removeDunce();
+  try {
+    if (fs.existsSync("dunce-timestamp.txt")) {
+      fs.readFile("dunce-timestamp.txt", "utf8", function (err, data) {
+        if (err) return console.log(err);
+        if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
+          removeDunce();
+        }
+      });
     }
-  });
+  } catch(err) {
+    fs.writeFile("dunce-timestamp.txt", "0", err => {
+      if (err) return console.log(err);
+      console.log('Created dunce-timestamp.txt');
+      dunceCheck();
+    })
+  }
+  
 }
 
 function removeDunce() {
