@@ -141,7 +141,6 @@ bot.on("message", function (user, userID, channelID, message, evt) {
           break;
         case "changelog":
           if (isHyper) {
-            console.log(clargs);
             bot.sendMessage({
               to: channelID,
               message: "@everyone Please welcome our 2020-2021 Eboard!",
@@ -467,30 +466,6 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
                 console.log('Logged current timestamp');
               });
             })
-            //var duncearr = Object.values(bot.servers[evt.d.guild_id].members)
-            //  .filter((m) => m.roles.includes("721563745343504384"))
-            //  .map((m) => m.id);
-            //duncearr.forEach((dunceid, i) => {
-            //  bot.removeFromRole({
-            //    serverID: evt.d.guild_id,
-            //    userID: dunceid,
-            //    roleID: "721563745343504384",
-            //  });
-            //  if (duncearr.length = i + 1) {
-            //    bot.addToRole({
-            //      serverID: evt.d.guild_id,
-            //      userID: userID,
-            //      roleID: "721563745343504384",
-            //    });
-            //  }
-            //});
-            //if (duncearr.length == 0) {
-            //  bot.addToRole({
-            //    serverID: evt.d.guild_id,
-            //    userID: userID,
-            //    roleID: "721563745343504384",
-            //  });
-            //}
           } else if (type == 6) {
             deletemsg1(channelID, messageID, 0);
           }
@@ -506,7 +481,6 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 function dunceCheck() {
   // check for dunce role and remove it if it's >1d
   fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
-    console.error(err);
     fs.writeFile("dunce-timestamp.txt", Date.now(), err => {
       console.log('Created dunce-timestamp.txt');
     })
@@ -517,23 +491,6 @@ function dunceCheck() {
       }
     });
   })
-  //try {
-  //  if (fs.existsSync("dunce-timestamp.txt")) {
-  //    fs.readFile("dunce-timestamp.txt", "utf8", function (err, data) {
-  //      if (err) return console.log(err);
-  //      if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
-  //        removeDunce();
-  //      }
-  //    });
-  //  }
-  //} catch(err) {
-  //  fs.writeFile("dunce-timestamp.txt", "0", err => {
-  //    if (err) return console.log(err);
-  //    console.log('Created dunce-timestamp.txt');
-  //    dunceCheck();
-  //  })
-  //}
-  
 }
 
 function removeDunce() {
