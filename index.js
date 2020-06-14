@@ -1,6 +1,9 @@
 require("dotenv").config();
 var Discord = require("discord.io");
 var logger = require("winston");
+var fs = require("fs");
+const { parse } = require("path");
+
 var bot = new Discord.Client({
   token: process.env.DISCORDBOTTOKEN,
   autorun: true,
@@ -23,6 +26,8 @@ bot.on("ready", function (evt) {
   });
   setCounter();
   setCounterFragile();
+  dunceCheck();
+  setInterval(dunceCheck, 1000 * 60 * 60);
 
   var memberCount = bot.servers["442754791563722762"].member_count;
   logger.info("Member Count: " + memberCount);
@@ -449,30 +454,43 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
                 ccounter +
                 "! Starting from the top.",
             });
-            var duncearr = Object.values(bot.servers[evt.d.guild_id].members)
-              .filter((m) => m.roles.includes("721563745343504384"))
-              .map((m) => m.id);
-            duncearr.forEach((dunceid, i) => {
-              bot.removeFromRole({
-                serverID: evt.d.guild_id,
-                userID: dunceid,
-                roleID: "721563745343504384",
-              });
-              if (duncearr.length = i + 1) {
-                bot.addToRole({
-                  serverID: evt.d.guild_id,
-                  userID: userID,
-                  roleID: "721563745343504384",
-                });
-              }
-            });
-            if (duncearr.length == 0) {
+            new Promise(function resetdunce(resolve, reject) {
+              resolve(removeDunce())
+            }).then(function(){
               bot.addToRole({
                 serverID: evt.d.guild_id,
                 userID: userID,
                 roleID: "721563745343504384",
               });
-            }
+              fs.writeFile('dunce-timestamp.txt', Date.now(), err => {
+                if (err) return console.log(err);
+                console.log('Logged current timestamp');
+              });
+            })
+            //var duncearr = Object.values(bot.servers[evt.d.guild_id].members)
+            //  .filter((m) => m.roles.includes("721563745343504384"))
+            //  .map((m) => m.id);
+            //duncearr.forEach((dunceid, i) => {
+            //  bot.removeFromRole({
+            //    serverID: evt.d.guild_id,
+            //    userID: dunceid,
+            //    roleID: "721563745343504384",
+            //  });
+            //  if (duncearr.length = i + 1) {
+            //    bot.addToRole({
+            //      serverID: evt.d.guild_id,
+            //      userID: userID,
+            //      roleID: "721563745343504384",
+            //    });
+            //  }
+            //});
+            //if (duncearr.length == 0) {
+            //  bot.addToRole({
+            //    serverID: evt.d.guild_id,
+            //    userID: userID,
+            //    roleID: "721563745343504384",
+            //  });
+            //}
           } else if (type == 6) {
             deletemsg1(channelID, messageID, 0);
           }
@@ -483,6 +501,35 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
       }
     }
   );
+}
+
+function dunceCheck() {
+  // check for dunce role and remove it if it's >1d
+  fs.readFile("dunce-timestamp.txt", "utf8", function (err, data) {
+    if (err) return console.log(err);
+    if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
+      removeDunce();
+    }
+  });
+}
+
+function removeDunce() {
+  var duncearr = Object.values(bot.servers["442754791563722762"].members)
+    .filter((m) => m.roles.includes("721563745343504384"))
+    .map((m) => m.id);
+  duncearr.forEach((dunceid, i) => {
+    bot.removeFromRole({
+      serverID: "442754791563722762",
+      userID: dunceid,
+      roleID: "721563745343504384",
+    });
+    if (duncearr.length == i + 1) {
+      return true;
+    }
+  });
+  if (duncearr.length == 0) {
+    return true;
+  }
 }
 
 // Utilities
