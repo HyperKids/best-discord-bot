@@ -287,6 +287,13 @@ bot.on("message", function (user, userID, channelID, message, evt) {
         message: "Make sure the first word of your message is a number! Your deleted message: `"+message+"`",
       });
       deletemsg1(channelID, evt.d.id, 0);
+    } else if (userID == lastUserFragile) {
+      bot.sendMessage({
+        to: userID,
+        message:
+          "Please do not send consecutive messages in The Hardcore Counting Game. Your deleted message: `"+message+"`",
+      });
+      deletemsg1(channelID, evt.d.id, 0);
     } else {
       isLastNumFragile(channelID, evt.d.id, userID, evt.d.type);
     }
