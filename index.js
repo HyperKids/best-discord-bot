@@ -454,18 +454,18 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
                 "! Starting from the top.",
             });
             new Promise(function resetdunce(resolve, reject) {
-              resolve(removeDunce())
-            }).then(function(){
+              resolve(removeDunce());
+            }).then(function () {
               bot.addToRole({
                 serverID: evt.d.guild_id,
                 userID: userID,
                 roleID: "721563745343504384",
               });
-              fs.writeFile('dunce-timestamp.txt', Date.now(), err => {
+              fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
                 if (err) return console.log(err);
-                console.log('Logged current timestamp');
+                console.log("Logged current timestamp");
               });
-            })
+            });
           } else if (type == 6) {
             deletemsg1(channelID, messageID, 0);
           }
@@ -481,16 +481,18 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 function dunceCheck() {
   // check for dunce role and remove it if it's >1d
   fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
-    fs.writeFile("dunce-timestamp.txt", Date.now(), err => {
-      console.log('Created dunce-timestamp.txt');
-    })
-    fs.readFile("dunce-timestamp.txt", "utf8", function (err, data) {
+    if (err) {
+      fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
+        console.log("Created dunce-timestamp.txt");
+      });
+    }
+    fs.readFile("dunce-timestamp.txt", "utf8", (err, data) => {
       if (err) return console.log(err);
       if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
         removeDunce();
       }
     });
-  })
+  });
 }
 
 function removeDunce() {
