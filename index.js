@@ -520,11 +520,7 @@ function removeDunce() {
 }
 
 function numberValidation(num) { // is the input a valid integer? in checks, use !numberValidation
-  if (!isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num)) {
-    return true;
-  } else {
-    return false;
-  }
+  return (!isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num))
 }
 
 // Utilities
