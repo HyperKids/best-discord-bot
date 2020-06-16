@@ -4,6 +4,9 @@ var logger = require("winston");
 var fs = require("fs");
 const { parse } = require("path");
 
+var regnum = /^\d+$/;
+var regnoleadingzeros = /^(0|[1-9][0-9]*)$/;
+
 var bot = new Discord.Client({
   token: process.env.DISCORDBOTTOKEN,
   autorun: true,
@@ -265,7 +268,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 
   // The Counting Game Infinity
   if (channelID == "720133492939161661") {
-    if (isNaN(message.split(" ")[0])) {
+    if (!numberValidation(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
         message:
@@ -290,7 +293,7 @@ bot.on("message", function (user, userID, channelID, message, evt) {
 
   // Fragile Counting Game
   if (channelID == "720323796111851572") {
-    if (isNaN(message.split(" ")[0])) {
+    if (!numberValidation(message.split(" ")[0])) {
       bot.sendMessage({
         to: userID,
         message:
@@ -513,6 +516,14 @@ function removeDunce() {
   });
   if (duncearr.length == 0) {
     return true;
+  }
+}
+
+function numberValidation(num) { // is the input a valid integer? in checks, use !numberValidation
+  if (!isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num)) {
+    return true;
+  } else {
+    return false;
   }
 }
 
