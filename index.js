@@ -479,6 +479,7 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 }
 
 function dunceCheck() {
+  console.log("Activated dunce check at "+Date.now().toString())
   // check for dunce role and remove it if it's >1d
   fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
     if (err) {
@@ -496,6 +497,7 @@ function dunceCheck() {
 }
 
 function removeDunce() {
+  console.log("Dunce removal fired at "+Date.now().toString())
   var duncearr = Object.values(bot.servers["442754791563722762"].members)
     .filter((m) => m.roles.includes("721563745343504384"))
     .map((m) => m.id);
