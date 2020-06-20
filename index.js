@@ -38,6 +38,23 @@ bot.on("ready", function (evt) {
 
 bot.on("message", function (user, userID, channelID, message, evt) {
   if (userID != "720120584155168771" && evt.d.type == 0) {
+    if (message.substring(0, 2) == "//" && channelID != "719595719404552324") {
+      bot.sendMessage({
+        to: channelID,
+        message: "<@!"+userID+">",
+        embed: {
+          color: 0xff0000,
+          title: ":x:  Notice",
+          description: "Please use <#719595719404552324> for music bot commands.",
+          timestamp: new Date(),
+          footer: {
+            icon_url:
+              "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
+            text: "Issued by BESTBot | "+userID.toString(),
+          },
+        },
+      });
+    }
     if (message.substring(0, 1) == ";") {
       var args = message.substring(1).split(" ");
       var cmd = args[0];
