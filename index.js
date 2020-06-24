@@ -499,6 +499,15 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
             m[0].content +
             "`",
         });
+      } else if (m[0].content.length > 255) {
+        deletemsg1(channelID, messageID, 0);
+        bot.sendMessage({
+          to: userID,
+          message:
+            "Messages need to be less than 256 characters. Your deleted message: `" +
+            m[0].content +
+            "`",
+        });
       } else {
         lastUserFragile = userID;
       }
