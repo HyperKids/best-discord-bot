@@ -41,16 +41,17 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     if (message.substring(0, 2) == "//" && channelID != "719595719404552324") {
       bot.sendMessage({
         to: channelID,
-        message: "<@!"+userID+">",
+        message: "<@!" + userID + ">",
         embed: {
           color: 0xff0000,
           title: ":x:  Notice",
-          description: "Please use <#719595719404552324> for music bot commands.",
+          description:
+            "Please use <#719595719404552324> for music bot commands.",
           timestamp: new Date(),
           footer: {
             icon_url:
               "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
-            text: "Issued by BESTBot | "+userID.toString(),
+            text: "Issued by BESTBot | " + userID.toString(),
           },
         },
       });
@@ -456,41 +457,48 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
     function (e, m) {
       ccounter = parseInt(m[0].content.split(" ")[0]);
       lcounter = parseInt(m[1].content.split(" ")[0]);
-      if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-        if (
-          /*parseInt(ccounter) !== 0 &&*/ userID !== "720120584155168771" &&
-          ccounter !== NaN
-        ) {
-          if (type == 0) {
-            bot.sendMessage({
-              to: "720323796111851572",
-              message:
-                "0 <@" +
-                userID +
-                "> broke the " +
-                lcounter +
-                " long chain by typing " +
-                ccounter +
-                "! Starting from the top.",
-            });
-            new Promise(function resetdunce(resolve, reject) {
-              resolve(removeDunce());
-            }).then(function () {
-              bot.addToRole({
-                serverID: evt.d.guild_id,
-                userID: userID,
-                roleID: "721563745343504384",
-              });
-              fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
-                if (err) return console.log(err);
-                console.log("Logged current timestamp");
-              });
-            });
-          } else if (type == 6) {
-            deletemsg1(channelID, messageID, 0);
-          }
-          //deletemsg1(channelID, messageID, 0);}
-        }
+      if (
+        parseInt(ccounter) != parseInt(lcounter) + 1 &&
+        userID !== "720120584155168771" &&
+        ccounter !== NaN &&
+        type == 0
+      ) {
+        bot.sendMessage({
+          to: "720323796111851572",
+          message:
+            "0 <@" +
+            userID +
+            "> broke the " +
+            lcounter +
+            " long chain by typing " +
+            ccounter +
+            "! Starting from the top.",
+        });
+        new Promise(function resetdunce(resolve, reject) {
+          resolve(removeDunce());
+        }).then(function () {
+          bot.addToRole({
+            serverID: evt.d.guild_id,
+            userID: userID,
+            roleID: "721563745343504384",
+          });
+          fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
+            if (err) return console.log(err);
+            console.log("Logged current timestamp");
+          });
+        });
+        //deletemsg1(channelID, messageID, 0);}
+      } else if (type == 6) { // handle pinning messages
+        deletemsg1(channelID, messageID, 0);
+      } else if (m[0].content.indexOf("\n") !== -1) {
+        deletemsg1(channelID, messageID, 0);
+        bot.sendMessage({
+          to: userID,
+          message:
+            "Please do not have multiple lines in your message. Your deleted message: `" +
+            m[0].content +
+            "`",
+        });
       } else {
         lastUserFragile = userID;
       }
@@ -499,7 +507,7 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 }
 
 function dunceCheck() {
-  console.log("Activated dunce check at "+Date.now().toString())
+  console.log("Activated dunce check at " + Date.now().toString());
   // check for dunce role and remove it if it's >1d
   fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
     if (err) {
@@ -517,7 +525,7 @@ function dunceCheck() {
 }
 
 function removeDunce() {
-  console.log("Dunce removal fired at "+Date.now().toString())
+  console.log("Dunce removal fired at " + Date.now().toString());
   var duncearr = Object.values(bot.servers["442754791563722762"].members)
     .filter((m) => m.roles.includes("721563745343504384"))
     .map((m) => m.id);
@@ -536,8 +544,9 @@ function removeDunce() {
   }
 }
 
-function numberValidation(num) { // is the input a valid integer? in checks, use !numberValidation
-  return (!isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num))
+function numberValidation(num) {
+  // is the input a valid integer? in checks, use !numberValidation
+  return !isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num);
 }
 
 // Utilities
