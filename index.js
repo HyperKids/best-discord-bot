@@ -36,6 +36,23 @@ bot.on("ready", function (evt) {
   logger.info("Member Count: " + memberCount);
 });
 
+bot.on("messageReactionAdd", function (reaction) {
+  if (
+    reaction.d.message_id == "605212454603194391"
+  ) {
+    switch (reaction.d.emoji.id) {
+      case "605198567816036382":
+        bot.sendMessage({
+          to: "442759545375424513",
+          message: "Hey <@!"+reaction.d.user_id+">, welcome to this channel!"
+        })
+        break;
+      default:
+        break;
+    }
+  }
+});
+
 bot.on("message", function (user, userID, channelID, message, evt) {
   if (userID != "720120584155168771" && evt.d.type == 0) {
     if (message.substring(0, 2) == "//" && channelID != "719595719404552324") {
