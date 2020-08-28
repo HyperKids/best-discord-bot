@@ -20,4 +20,4 @@ Every time you pull from the repository, execute `yarn`, then `yarn start`.
 ### Isaac Kim
 - Working on fixing bugs in the counting games (6/10/2020)
 ### Salvador Brandi
-- Bot Introductions to competetive games channels (8/27/20202)
+- Bot Introductions to competetive games channels (8/27/2020)
