@@ -37,16 +37,109 @@ bot.on("ready", function (evt) {
 });
 
 bot.on("messageReactionAdd", function (reaction) {
-  if (
-    reaction.d.message_id == "605212454603194391"
-  ) {
+  const fs = require("fs");
+
+  if (reaction.d.message_id == "605212454603194391") {
+    // load in the list of reacts
+    var raw = fs.readFileSync("reacted_users.json");
+    var user_reacts = JSON.parse(raw);
+
+    // get the object from the array with the id of the person that just reacted
+    let userobj = user_reacts.find(({ userID }) => userID == reaction.d.user_id); 
+  
+    // if the user id is not in the json, add it with all fields false
+    if (userobj == undefined) {
+      user_reacts.push(
+        {
+          "userID":reaction.d.user_id,
+          "lol": false,
+          "melee": false,
+          "ultimate": false,
+          "dota2": false,
+          "hearthstone": false
+        }
+      );
+
+    // set the user object again
+    userobj = user_reacts.find(({ userID }) => userID == reaction.d.user_id);
+
+    
     switch (reaction.d.emoji.id) {
-      case "605198567816036382":
-        bot.sendMessage({
-          to: "442759545375424513",
-          message: "Hey <@!"+reaction.d.user_id+">, welcome to this channel!"
-        })
+      case "605198567816036382": // league of legends emoji :lol:
+        if (userobj.lol == false) {
+          bot.sendMessage({
+            to: "442759545375424513", // league of legends channel
+            message:
+              "Hey <@!" +
+              reaction.d.user_id +
+              ">, welcome to BEST's League of Legends community! Everyone, give a warm welcome to our newest member!",
+          });
+          userobj.lol = true;
+          updated = JSON.stringify(user_reacts);
+          fs.writeFileSync("reacted_users.json", updated);
+        }
         break;
+
+      case "605201727041306644": // melee emoji :smash:
+        if (userobj.melee == false) {
+          bot.sendMessage({
+            to: "442759466564190245", // melee channel
+            message:
+              "Hey <@!" +
+              reaction.d.user_id +
+              ">, welcome to BEST's Super Smash Bros Melee community! Everyone, give a warm welcome to our newest member!",
+          });
+          userobj.melee = true;
+          updated = JSON.stringify(user_reacts);
+          fs.writeFileSync("reacted_users.json", updated);
+        }
+        break;
+
+      case "605201726722670613": // ultimate emoji :smashball:
+        if (userobj.ultimate == false) {
+          bot.sendMessage({
+            to: "442759508943568936", // ultimate channel
+            message:
+              "Hey <@!" +
+              reaction.d.user_id +
+              ">, welcome to BEST's Super Smash Bros Ultimate community! Everyone, give a warm welcome to our newest member!",
+          });
+          userobj.ultimate = true;
+          updated = JSON.stringify(user_reacts);
+          fs.writeFileSync("reacted_users.json", updated);
+        }
+        break;
+
+      case "605202850850537502": // dota2 emoji :dota2:
+        if (userobj.dota2 == false) {
+          bot.sendMessage({
+            to: "746590071720771616", // dota2 channel
+            message:
+              "Hey <@!" +
+              reaction.d.user_id +
+              ">, welcome to BEST's Dota 2 community! Everyone, give a warm welcome to our newest member!",
+          });
+          userobj.dota2 = true;
+          updated = JSON.stringify(user_reacts);
+          fs.writeFileSync("reacted_users.json", updated);
+        }
+        break;
+
+      case "605201097186869248": // hearthstone emoji :hearthstone:
+        if (userobj.hearthstone == false) {
+          bot.sendMessage({
+            to: "442759605282668564", // hearthstone channel
+            message:
+              "Hey <@!" +
+              reaction.d.user_id +
+              '>, welcome to BEST\'s Hearthstone community! "Everyone, Get In Here" and give a warm welcome to our newest member!',
+          });
+          userobj.hearthstone = true;
+          updated = JSON.stringify(user_reacts);
+          fs.writeFileSync("reacted_users.json", updated);
+        }
+        break;
+
       default:
         break;
     }
@@ -505,7 +598,8 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
           });
         });
         //deletemsg1(channelID, messageID, 0);}
-      } else if (type == 6) { // handle pinning messages
+      } else if (type == 6) {
+        // handle pinning messages
         deletemsg1(channelID, messageID, 0);
       } else if (m[0].content.indexOf("\n") !== -1) {
         deletemsg1(channelID, messageID, 0);
