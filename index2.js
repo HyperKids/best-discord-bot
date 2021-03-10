@@ -73,9 +73,26 @@ client.on("message", (msg) => {
                     }
                   })
                   .catch(console.error);
+              } else if (
+                args.length == 1 &&
+                teamroles.map((obj) => obj.name).includes(args[0])
+              ) {
+                let roleid = teamroles.find((obj) => obj.name == args[0]).id;
+                let role = msg.guild.roles.cache.get(roleid);
+                let rolename = role.name;
+                let rolemembers = role.members;
+                console.log(role);
+                let membersWithRole = msg.guild.members.cache
+                  .filter((member) => {
+                    return member.roles.cache.find("id", roleid);
+                  })
+                  .map((member) => {
+                    return member.user.username;
+                  });
+                console.log(membersWithRole);
               } else {
                 msg.channel.send(
-                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`-team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}team teamname\` to view team members, and \`${prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
                     .map((obj) => obj.name)
                     .join("`, `")}\`.`
                 );
@@ -92,8 +109,14 @@ client.on("message", (msg) => {
     msg.channel.send("pong");
   }
   if (msg.content.toLowerCase().includes("you love me")) {
-    const emojis = [":person_shrugging:", ":white_check_mark:", ":x:"]
-    msg.channel.send({embed: {title: `BEST - Love for You:  ${emojis[Math.floor(Math.random() * emojis.length)]}`}})
+    const emojis = [":person_shrugging:", ":white_check_mark:", ":x:"];
+    msg.channel.send({
+      embed: {
+        title: `BEST - Love for You:  ${
+          emojis[Math.floor(Math.random() * emojis.length)]
+        }`,
+      },
+    });
   }
 });
 
