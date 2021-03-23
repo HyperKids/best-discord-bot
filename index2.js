@@ -1,5 +1,6 @@
 require("dotenv").config();
 const Discord = require("discord.js");
+const axios = require("axios");
 const client = new Discord.Client();
 
 const prefix = "^";
@@ -7,6 +8,8 @@ const prefix = "^";
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
+  updateVerifiedStudents();
+  setInterval(updateVerifiedStudents(), 1000 * 60 * 60);
 });
 
 client.on("message", (msg) => {
@@ -40,6 +43,17 @@ client.on("message", (msg) => {
           // TODO: Add changelog command
           case "noperm":
             noperm(msg.channel.id);
+            break;
+          case "dev-1":
+            if (isHyper) {
+              msg.guild.members.fetch().then((members) => {
+                console.log(
+                  msg.guild.roles.cache
+                    .get("756983144900591627")
+                    .members.map((m) => m.user.tag)
+                );
+              });
+            }
             break;
           case "team":
             if (isCaptain || isPresident) {
@@ -132,6 +146,73 @@ function noperm(channelID) {
       },
     },
   });
+}
+
+function updateVerifiedStudents() {
+  console.log("updateVerifiedStudents was called at " + new Date())
+  if (process.env.GCP_API_KEY) {
+    axios
+      .get(
+        `https://sheets.googleapis.com/v4/spreadsheets/1AYBuSmPIvI8iSi5Tnpstzm-wGjEUGiICzO0iZLOYrhA/values/DiscordTags!A:A?majorDimension=COLUMNS&key=${process.env.GCP_API_KEY}`
+      )
+      .then((res) => {
+        client.guilds.fetch("442754791563722762").then((guild) => {
+          guild.members.fetch().then((members) => {
+            var verifiedrolemembers = guild.roles.cache
+              .get("768253432921849876")
+              .members.map((m) => m.user.tag.toLowerCase());
+            var gsheettags = res.data.values[0].map((v) => v.toLowerCase());
+            var posdiff = gsheettags
+              .filter((x) => !verifiedrolemembers.includes(x.toLowerCase()))
+              .map((v) => v.toLowerCase()); // filters to differences between the two arrays - verifiedrolemembers is
+            // current members on the server with the "Verified" role, res.data.values[0]
+            // is Google Form list of DiscordTags that should have the role
+            // var posdiff = diff // diff.filter((x) => gsheettags.includes(x));
+            var negdiff = verifiedrolemembers
+              .filter((x) => !gsheettags.includes(x.toLowerCase()))
+              .map((v) => v.toLowerCase()); // diff.filter((x) => verifiedrolemembers.includes(x));
+            var diff = posdiff.concat(negdiff);
+            diff.forEach((DiscordTag) => {
+              let user = client.users.cache.find(
+                (u) => u.tag.toLowerCase() === DiscordTag.toLowerCase()
+              )?.id;
+              if (user) {
+                let guilduser = guild.members
+                  .fetch(user)
+                  .then((guilduser) => {
+                    let username = guilduser.user.username.toLowerCase();
+                    let discrim = guilduser.user.discriminator;
+                    if (posdiff.includes(username + "#" + discrim)) {
+                      guilduser.roles
+                        .add("768253432921849876")
+                        .catch(console.error);
+                      console.log("+" + username);
+                    } else if (negdiff.includes(username + "#" + discrim)) {
+                      guilduser.roles
+                        .remove("768253432921849876")
+                        .catch(console.error);
+                      console.log("-" + username);
+                    } else {
+                      console.error(
+                        `No clue what to do with this user! ${
+                          username + "#" + discrim
+                        }`
+                      );
+                    }
+                  })
+                  .catch(console.error);
+              } else {
+                console.log(`${DiscordTag} is invalid!`);
+              }
+            });
+          });
+        });
+      });
+  } else {
+    console.log(
+      "GCP_API_KEY in .env is not defined! Unable to update verified student roles."
+    );
+  }
 }
 
 client.login(process.env.DISCORDBOTTOKEN);
