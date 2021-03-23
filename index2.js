@@ -119,7 +119,7 @@ client.on("message", (msg) => {
       });
     }
   }
-  if (msg.content.toLowerCase().includes("<@720120584155168771>")) {
+  if (msg.content.toLowerCase().includes("<@&720120584155168771>")) {
     msg.channel.send("pong");
   }
   if (msg.content.toLowerCase().includes("you love me")) {
