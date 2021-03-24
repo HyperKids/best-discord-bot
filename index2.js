@@ -9,7 +9,7 @@ client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
   updateVerifiedStudents();
-  setInterval(updateVerifiedStudents(), 1000 * 60 * 60);
+  setInterval(updateVerifiedStudents, 1000 * 60 * 60);
 });
 
 client.on("message", (msg) => {
@@ -63,6 +63,7 @@ client.on("message", (msg) => {
                 { name: "ultimate", id: "779479212222054486" },
                 { name: "hearthstone", id: "779479450412122193" },
                 { name: "siege", id: "759829367311433800" },
+                { name: "valorant", id: "823291439378989106" },
               ];
               if (
                 args.length == 2 &&
