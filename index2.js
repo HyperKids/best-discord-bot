@@ -8,6 +8,7 @@ const prefix = "^";
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
+  updateVerifiedStudents();
   setInterval(() => updateVerifiedStudents(), 1000 * 60 * 60);
 });
 
