@@ -96,15 +96,15 @@ client.on("message", (msg) => {
                 let role = msg.guild.roles.cache.get(roleid);
                 let rolename = role.name;
                 let rolemembers = role.members;
-                console.log(role);
-                let membersWithRole = msg.guild.members.cache
-                  .filter((member) => {
-                    return member.roles.cache.find("id", roleid);
-                  })
-                  .map((member) => {
-                    return member.user.username;
-                  });
-                console.log(membersWithRole);
+                msg.guild.members.fetch().then((members) => {
+                  let membersWithRole = msg.guild.roles.cache
+                    .get(roleid)
+                    .members.map((m) => m.user.tag)
+                    .join(", ");
+                  msg.channel.send(
+                    `Members in \`${rolename}\`: ${membersWithRole}`
+                  );
+                });
               } else {
                 msg.channel.send(
                   `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}team teamname\` to view team members, and \`${prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
@@ -150,7 +150,7 @@ function noperm(channelID) {
 }
 
 function updateVerifiedStudents() {
-  console.log("updateVerifiedStudents was called at " + new Date())
+  console.log("updateVerifiedStudents was called at " + new Date());
   if (process.env.GCP_API_KEY) {
     axios
       .get(
