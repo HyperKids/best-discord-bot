@@ -30,7 +30,7 @@ bot.on("ready", function (evt) {
   setCounter();
   setCounterFragile();
   dunceCheck();
-  setInterval(dunceCheck, 1000 * 60 * 60);
+  setInterval(() => dunceCheck(), 1000 * 60 * 60);
 
   var memberCount = bot.servers["442754791563722762"].member_count;
   logger.info("Member Count: " + memberCount);
