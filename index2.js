@@ -10,6 +10,9 @@ client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
   updateVerifiedStudents();
   setInterval(() => updateVerifiedStudents(), 1000 * 60 * 60);
+  client.guilds.fetch("442754791563722762").then((guild) => {
+    guild.members.fetch();
+  });
 });
 
 client.on("message", (msg) => {
@@ -215,5 +218,13 @@ function updateVerifiedStudents() {
     );
   }
 }
+
+client.on("guildMemberUpdate", (oldUser, newUser) => {
+  if (newUser.nickname.startsWith("BLUENO WAS HERE")) {
+    newUser.roles.add("826602708474921000");
+  } else {
+    newUser.roles.remove("826602708474921000");
+  }
+});
 
 client.login(process.env.DISCORDBOTTOKEN);
