@@ -119,6 +119,31 @@ client.on("message", (msg) => {
               noperm(msg.channel.id);
             }
             break;
+          case "react":
+            if (isEboard) {
+              let emote = client.emojis.cache.find(
+                (emoji) => emoji.name === args[1]
+              ).id;
+              if (args.length == 2 && args[0].match(/\d+/) && emote) {
+                msg.channel.messages
+                  .fetch(args[0])
+                  .then((message) => {
+                    message.react(emote);
+                  })
+                  .catch((err) => {
+                    msg.channel.send(
+                      `:x: Invalid MessageID! Make sure the message is in this channel.`
+                    );
+                  });
+              } else {
+                msg.channel.send(
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
+                );
+              }
+            } else {
+              noperm(msg.channel.id);
+            }
+            break;
         }
       });
     }
@@ -219,12 +244,31 @@ function updateVerifiedStudents() {
   }
 }
 
-client.on("guildMemberUpdate", (oldUser, newUser) => {
-  if (newUser.nickname.startsWith("BLUENO WAS HERE")) {
-    newUser.roles.add("826602708474921000");
-  } else {
-    newUser.roles.remove("826602708474921000");
-  }
-});
+// April Fools 2021
+// client.on("guildMemberUpdate", (oldUser, newUser) => {
+//   if (newUser.nickname?.toLowerCase().startsWith("hi blueno!")) {
+//     newUser.roles.add("826602708474921000");
+//     client.guilds.fetch("442754791563722762").then((guild) => {
+//       let blueno = guild.roles.cache
+//         .get("826602708474921000")
+//         .members.map((m) => m.user.tag);
+//       let bluenolength = blueno.length;
+//       guild.members.fetch().then((members) => {
+//         client.channels.cache
+//           .get("827091079810908210")
+//           .messages.fetch("827093062328909884")
+//           .then((message) => {
+//             message.edit(
+//               `${bluenolength} users have welcomed Blueno. The newest welcomer was ${newUser} (${new Date().toLocaleString(
+//                 "en-US"
+//               )}).`
+//             );
+//           });
+//       });
+//     });
+//   } else {
+//     newUser.roles.remove("826602708474921000");
+//   }
+// });
 
 client.login(process.env.DISCORDBOTTOKEN);
