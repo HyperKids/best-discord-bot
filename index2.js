@@ -173,7 +173,7 @@ client.on("message", (msg) => {
             if (isHyper) {
               msg.channel
                 .send(
-                  "**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nYou're able to select the colors of the roles below your current level."
+                  "**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nIf you are a <@&585841945386156033> or a <@&509190343892140033>, you can also see this channel to select your perk color! You can't choose any other colors until you're <@&682031537231101957>, though.\n\nYou're able to select the colors of the roles below your current level."
                 )
                 .then(() => {
                   bestcolors.forEach((obj) => {
@@ -416,7 +416,7 @@ client.on("messageReactionAdd", (reaction, user) => {
         let userroles = guser._roles;
         if (
           userroles.includes(
-            bestcolors.find((obj) => obj.messageID === reaction.message.id).role
+            bestcolors.find((obj) => obj.messageID === reaction.message.id).perm
           )
         ) {
           reaction.message.react("✅");
