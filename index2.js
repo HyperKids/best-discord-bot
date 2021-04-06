@@ -1,9 +1,12 @@
 require("dotenv").config();
 const Discord = require("discord.js");
 const axios = require("axios");
+const fs = require("fs");
 const client = new Discord.Client();
 
 const prefix = "^";
+
+const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
 
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
@@ -12,6 +15,10 @@ client.on("ready", () => {
   setInterval(() => updateVerifiedStudents(), 1000 * 60 * 60);
   client.guilds.fetch("442754791563722762").then((guild) => {
     guild.members.fetch();
+  });
+  client.channels.fetch("828810185509961764").then((channel) => {
+    // name-colors channel, fetches reaction messages
+    channel.messages.fetch();
   });
 });
 
@@ -164,7 +171,19 @@ client.on("message", (msg) => {
             break;
           case "best-colors":
             if (isHyper) {
-              msg.channel.send("**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nYou're able to select the colors of the roles below your current level.")
+              msg.channel
+                .send(
+                  "**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nYou're able to select the colors of the roles below your current level."
+                )
+                .then(() => {
+                  bestcolors.forEach((obj) => {
+                    msg.channel
+                      .send(`<@&${obj.role}> - <@&${obj.color}>`)
+                      .then((message) => {
+                        message.react("🔸");
+                      });
+                  });
+                });
             }
             break;
         }
@@ -386,5 +405,60 @@ function updateMemberDividers(guildmember) {
     });
   });
 }
+
+client.on("messageReactionAdd", (reaction, user) => {
+  if (
+    bestcolors.map((obj) => obj.messageID).includes(reaction.message.id) &&
+    reaction.emoji.name === "🔸"
+  ) {
+    client.guilds.fetch("442754791563722762").then((guild) => {
+      guild.members.fetch(user.id).then((guser) => {
+        let userroles = guser._roles;
+        if (
+          userroles.includes(
+            bestcolors.find((obj) => obj.messageID === reaction.message.id).role
+          )
+        ) {
+          reaction.message.react("✅");
+          reaction.users.remove(user.id);
+          setTimeout(() => {
+            reaction.message.reactions.cache.get("✅")?.remove();
+          }, 5000);
+          let oldColors = bestcolors.filter(({ color }) =>
+            userroles.includes(color)
+          );
+          if (
+            oldColors &&
+            bestcolors.find((obj) => obj.messageID === reaction.message.id)
+              .color === oldColors[0].color
+          ) {
+            oldColors.forEach((obj) => {
+              guser.roles.remove(obj.color);
+            });
+          } else if (oldColors) {
+            oldColors.forEach((obj) => {
+              guser.roles.remove(obj.color);
+            });
+            guser.roles.add(
+              bestcolors.find((obj) => obj.messageID === reaction.message.id)
+                .color
+            );
+          } else {
+            guser.roles.add(
+              bestcolors.find((obj) => obj.messageID === reaction.message.id)
+                .color
+            );
+          }
+        } else {
+          reaction.message.react("❌");
+          reaction.users.remove(user.id);
+          setTimeout(() => {
+            reaction.message.reactions.cache.get("❌")?.remove();
+          }, 5000);
+        }
+      });
+    });
+  }
+});
 
 client.login(process.env.DISCORDBOTTOKEN);
