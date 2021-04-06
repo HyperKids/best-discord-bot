@@ -430,7 +430,7 @@ client.on("messageReactionAdd", (reaction, user) => {
           if (
             oldColors &&
             bestcolors.find((obj) => obj.messageID === reaction.message.id)
-              .color === oldColors[0].color
+              .color === oldColors[0]?.color
           ) {
             oldColors.forEach((obj) => {
               guser.roles.remove(obj.color);
