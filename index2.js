@@ -151,6 +151,22 @@ client.on("message", (msg) => {
                 .then((member) => updateMemberDividers(member));
             }
             break;
+          case "update-all-dividers":
+            if (isHyper) {
+              client.guilds.fetch("442754791563722762").then((guild) => {
+                guild.members.fetch().then((members) => {
+                  members.forEach((member) => {
+                    updateMemberDividers(member);
+                  });
+                });
+              });
+            }
+            break;
+          case "best-colors":
+            if (isHyper) {
+              msg.channel.send("**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nYou're able to select the colors of the roles below your current level.")
+            }
+            break;
         }
       });
     }
@@ -262,7 +278,7 @@ class TransientArray extends Array {
     const i2 = super.push(...arguments);
     setTimeout(() => {
       for (let i = i1; i < i2; i++) delete this[i];
-    }, 1000);
+    }, 2000);
     return i2;
   }
 }
@@ -295,7 +311,7 @@ client.on("guildMemberUpdate", (oldUser, newUser) => {
     newUser.roles.remove("826602708474921000");
   }
   */
-  if (newUser.id === "196685652249673728") {
+  if (!newUser.user.bot) {
     if (!preventMultipleUpdates.includes(newUser.id)) {
       preventMultipleUpdates.push(newUser.id);
       updateMemberDividers(newUser);
@@ -304,6 +320,9 @@ client.on("guildMemberUpdate", (oldUser, newUser) => {
 });
 
 function updateMemberDividers(guildmember) {
+  if (guildmember.user.bot === true) {
+    return;
+  }
   client.guilds.fetch("442754791563722762").then((guild) => {
     guild.roles.fetch().then((roles) => {
       let guildroles = guild.roles.cache.sort((a, b) =>
@@ -318,8 +337,6 @@ function updateMemberDividers(guildmember) {
         .filter(({ id }) => rankIds.includes(id))
         .map(({ rawPosition }) => rawPosition);
 
-      console.log(rawPositions);
-
       let hasHigherRole = rawPositions.some(
         (pos) => pos > rankrole.rawPosition
       );
@@ -330,53 +347,42 @@ function updateMemberDividers(guildmember) {
         (pos) => pos > selrole.rawPosition && pos < badgerole.rawPosition
       );
       let hasSelRole = rawPositions.some((pos) => pos < selrole.rawPosition);
-      console.log(
+      /* console.log(
         `rankrole: ${rankrole.rawPosition}\nbadgerole: ${badgerole.rawPosition}\nselrole: ${selrole.rawPosition}`
-      );
+      );*/
 
       let hasRankDivider = rawPositions.includes(rankrole.rawPosition);
       let hasBadgeDivider = rawPositions.includes(badgerole.rawPosition);
       let hasSelDivider = rawPositions.includes(selrole.rawPosition);
 
       if (hasHigherRole && !hasRankDivider) {
-        console.log("+ Rank Roles");
-        // guildmember.roles.add(rankrole);
+        guildmember.roles.add(rankrole);
       } else if (!hasHigherRole && hasRankDivider) {
-        console.log("- Rank Roles");
-        // guildmember.roles.remove(rankrole);
+        guildmember.roles.remove(rankrole);
       }
 
       if (hasBadgeRole && !hasBadgeDivider) {
-        console.log("+ Badge Roles");
+        guildmember.roles.add(badgerole);
       } else if (!hasBadgeRole && hasBadgeDivider) {
-        console.log("- Badge Roles");
+        guildmember.roles.remove(badgerole);
       }
 
       if (hasSelRole && !hasSelDivider) {
-        console.log("+ Selected Roles");
+        guildmember.roles.add(selrole);
       } else if (!hasSelRole && hasSelDivider) {
-        console.log("- Selected Roles");
+        guildmember.roles.remove(selrole);
       }
 
-      if (!hasRankRole) {
-        console.log("+ New Bear");
-        // guildmember.roles.add("828782852762107964")
+      if (!hasRankRole && (hasSelRole || hasBadgeRole)) {
+        guildmember.roles.add("828782852762107964");
       } else if (
         rankIds.includes("828782852762107964") &&
         rawPositions.filter(
           (pos) => pos > badgerole.rawPosition && pos < rankrole.rawPosition
         ).length > 1
       ) {
-        console.log("- New Bear"); // guildmember.roles.remove("828782852762107964")
+        guildmember.roles.remove("828782852762107964");
       }
-
-      // if (guildmember.displayHexColor === "#2f3136") {
-      //   console.log("+ New Bear")
-      //   // guildmember.roles.add("828782852762107964")
-      // } else if (rankIds.includes("828782852762107964") && guildmember.displayHexColor !== "#99aab6") { // TODO: Make these non reliant on display name hex color
-      //   console.log("- New Bear")
-      //   // guildmember.roles.remove("828782852762107964")
-      // }
     });
   });
 }
