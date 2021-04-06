@@ -144,6 +144,13 @@ client.on("message", (msg) => {
               noperm(msg.channel.id);
             }
             break;
+          case "umd":
+            if (isHyper) {
+              msg.guild.members
+                .fetch(args[0])
+                .then((member) => updateMemberDividers(member));
+            }
+            break;
         }
       });
     }
@@ -220,6 +227,11 @@ function updateVerifiedStudents() {
                       guilduser.roles
                         .remove("768253432921849876")
                         .catch(console.error);
+                      client.users.cache
+                        .get(guilduser.id)
+                        .send(
+                          "Hi! Just letting you know that your `Verified Brown` role was removed on the Brown Esports server. This is likely caused by a change in your username, or by you unlinking your Discord account in our membership form. If you changed your username, please update it on the membership registration form at https://bit.ly/brownesports."
+                        );
                       console.log("-" + username);
                     } else {
                       console.error(
@@ -244,31 +256,129 @@ function updateVerifiedStudents() {
   }
 }
 
-// April Fools 2021
-// client.on("guildMemberUpdate", (oldUser, newUser) => {
-//   if (newUser.nickname?.toLowerCase().startsWith("hi blueno!")) {
-//     newUser.roles.add("826602708474921000");
-//     client.guilds.fetch("442754791563722762").then((guild) => {
-//       let blueno = guild.roles.cache
-//         .get("826602708474921000")
-//         .members.map((m) => m.user.tag);
-//       let bluenolength = blueno.length;
-//       guild.members.fetch().then((members) => {
-//         client.channels.cache
-//           .get("827091079810908210")
-//           .messages.fetch("827093062328909884")
-//           .then((message) => {
-//             message.edit(
-//               `${bluenolength} users have welcomed Blueno. The newest welcomer was ${newUser} (${new Date().toLocaleString(
-//                 "en-US"
-//               )}).`
-//             );
-//           });
-//       });
-//     });
-//   } else {
-//     newUser.roles.remove("826602708474921000");
-//   }
-// });
+class TransientArray extends Array {
+  push() {
+    const i1 = this.length;
+    const i2 = super.push(...arguments);
+    setTimeout(() => {
+      for (let i = i1; i < i2; i++) delete this[i];
+    }, 1000);
+    return i2;
+  }
+}
+
+let preventMultipleUpdates = new TransientArray();
+
+client.on("guildMemberUpdate", (oldUser, newUser) => {
+  /* April Fools 2021
+  if (newUser.nickname?.toLowerCase().startsWith("hi blueno!")) {
+    newUser.roles.add("826602708474921000");
+    client.guilds.fetch("442754791563722762").then((guild) => {
+      let blueno = guild.roles.cache
+        .get("826602708474921000")
+        .members.map((m) => m.user.tag);
+      let bluenolength = blueno.length;
+      guild.members.fetch().then((members) => {
+        client.channels.cache
+          .get("827091079810908210")
+          .messages.fetch("827093062328909884")
+          .then((message) => {
+            message.edit(
+              `${bluenolength} users have welcomed Blueno. The newest welcomer was ${newUser} (${new Date().toLocaleString(
+                "en-US"
+              )}).`
+            );
+          });
+      });
+    });
+  } else {
+    newUser.roles.remove("826602708474921000");
+  }
+  */
+  if (newUser.id === "196685652249673728") {
+    if (!preventMultipleUpdates.includes(newUser.id)) {
+      preventMultipleUpdates.push(newUser.id);
+      updateMemberDividers(newUser);
+    }
+  }
+});
+
+function updateMemberDividers(guildmember) {
+  client.guilds.fetch("442754791563722762").then((guild) => {
+    guild.roles.fetch().then((roles) => {
+      let guildroles = guild.roles.cache.sort((a, b) =>
+        a.rawPosition < b.rawPosition ? 1 : -1
+      );
+      let rankrole = guild.roles.cache.get("828419381414461440"); // rank roles
+      let badgerole = guild.roles.cache.get("828418427970387968"); // badges
+      let selrole = guild.roles.cache.get("828490418203131934"); // selected roles
+
+      let rankIds = guildmember._roles;
+      let rawPositions = guildroles
+        .filter(({ id }) => rankIds.includes(id))
+        .map(({ rawPosition }) => rawPosition);
+
+      console.log(rawPositions);
+
+      let hasHigherRole = rawPositions.some(
+        (pos) => pos > rankrole.rawPosition
+      );
+      let hasRankRole = rawPositions.some(
+        (pos) => pos > badgerole.rawPosition && pos < rankrole.rawPosition
+      );
+      let hasBadgeRole = rawPositions.some(
+        (pos) => pos > selrole.rawPosition && pos < badgerole.rawPosition
+      );
+      let hasSelRole = rawPositions.some((pos) => pos < selrole.rawPosition);
+      console.log(
+        `rankrole: ${rankrole.rawPosition}\nbadgerole: ${badgerole.rawPosition}\nselrole: ${selrole.rawPosition}`
+      );
+
+      let hasRankDivider = rawPositions.includes(rankrole.rawPosition);
+      let hasBadgeDivider = rawPositions.includes(badgerole.rawPosition);
+      let hasSelDivider = rawPositions.includes(selrole.rawPosition);
+
+      if (hasHigherRole && !hasRankDivider) {
+        console.log("+ Rank Roles");
+        // guildmember.roles.add(rankrole);
+      } else if (!hasHigherRole && hasRankDivider) {
+        console.log("- Rank Roles");
+        // guildmember.roles.remove(rankrole);
+      }
+
+      if (hasBadgeRole && !hasBadgeDivider) {
+        console.log("+ Badge Roles");
+      } else if (!hasBadgeRole && hasBadgeDivider) {
+        console.log("- Badge Roles");
+      }
+
+      if (hasSelRole && !hasSelDivider) {
+        console.log("+ Selected Roles");
+      } else if (!hasSelRole && hasSelDivider) {
+        console.log("- Selected Roles");
+      }
+
+      if (!hasRankRole) {
+        console.log("+ New Bear");
+        // guildmember.roles.add("828782852762107964")
+      } else if (
+        rankIds.includes("828782852762107964") &&
+        rawPositions.filter(
+          (pos) => pos > badgerole.rawPosition && pos < rankrole.rawPosition
+        ).length > 1
+      ) {
+        console.log("- New Bear"); // guildmember.roles.remove("828782852762107964")
+      }
+
+      // if (guildmember.displayHexColor === "#2f3136") {
+      //   console.log("+ New Bear")
+      //   // guildmember.roles.add("828782852762107964")
+      // } else if (rankIds.includes("828782852762107964") && guildmember.displayHexColor !== "#99aab6") { // TODO: Make these non reliant on display name hex color
+      //   console.log("- New Bear")
+      //   // guildmember.roles.remove("828782852762107964")
+      // }
+    });
+  });
+}
 
 client.login(process.env.DISCORDBOTTOKEN);
