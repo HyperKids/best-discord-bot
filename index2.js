@@ -334,11 +334,80 @@ client.on("guildMemberUpdate", (oldUser, newUser) => {
     if (!preventMultipleUpdates.includes(newUser.id)) {
       preventMultipleUpdates.push(newUser.id);
       updateMemberDividers(newUser);
+      updateUserColors(newUser);
     }
   }
 });
 
 function updateMemberDividers(guildmember) {
+  if (guildmember.user.bot === true) {
+    return;
+  }
+  client.guilds.fetch("442754791563722762").then((guild) => {
+    guild.roles.fetch().then((roles) => {
+      let guildroles = guild.roles.cache.sort((a, b) =>
+        a.rawPosition < b.rawPosition ? 1 : -1
+      );
+      let rankrole = guild.roles.cache.get("828419381414461440"); // rank roles
+      let badgerole = guild.roles.cache.get("828418427970387968"); // badges
+      let selrole = guild.roles.cache.get("828490418203131934"); // selected roles
+
+      let rankIds = guildmember._roles;
+      let rawPositions = guildroles
+        .filter(({ id }) => rankIds.includes(id))
+        .map(({ rawPosition }) => rawPosition);
+
+      let hasHigherRole = rawPositions.some(
+        (pos) => pos > rankrole.rawPosition
+      );
+      let hasRankRole = rawPositions.some(
+        (pos) => pos > badgerole.rawPosition && pos < rankrole.rawPosition
+      );
+      let hasBadgeRole = rawPositions.some(
+        (pos) => pos > selrole.rawPosition && pos < badgerole.rawPosition
+      );
+      let hasSelRole = rawPositions.some((pos) => pos < selrole.rawPosition);
+      /* console.log(
+        `rankrole: ${rankrole.rawPosition}\nbadgerole: ${badgerole.rawPosition}\nselrole: ${selrole.rawPosition}`
+      );*/
+
+      let hasRankDivider = rawPositions.includes(rankrole.rawPosition);
+      let hasBadgeDivider = rawPositions.includes(badgerole.rawPosition);
+      let hasSelDivider = rawPositions.includes(selrole.rawPosition);
+
+      if (hasHigherRole && !hasRankDivider) {
+        guildmember.roles.add(rankrole);
+      } else if (!hasHigherRole && hasRankDivider) {
+        guildmember.roles.remove(rankrole);
+      }
+
+      if (hasBadgeRole && !hasBadgeDivider) {
+        guildmember.roles.add(badgerole);
+      } else if (!hasBadgeRole && hasBadgeDivider) {
+        guildmember.roles.remove(badgerole);
+      }
+
+      if (hasSelRole && !hasSelDivider) {
+        guildmember.roles.add(selrole);
+      } else if (!hasSelRole && hasSelDivider) {
+        guildmember.roles.remove(selrole);
+      }
+
+      if (!hasRankRole && (hasSelRole || hasBadgeRole)) {
+        guildmember.roles.add("828782852762107964");
+      } else if (
+        rankIds.includes("828782852762107964") &&
+        rawPositions.filter(
+          (pos) => pos > badgerole.rawPosition && pos < rankrole.rawPosition
+        ).length > 1
+      ) {
+        guildmember.roles.remove("828782852762107964");
+      }
+    });
+  });
+}
+
+function updateUserColors(guildmember) {
   if (guildmember.user.bot === true) {
     return;
   }
