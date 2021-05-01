@@ -65,6 +65,16 @@ client.on("message", (msg) => {
               });
             }
             break;
+          case "deafenall":
+            if (isHyper) {
+              if (msg.member.voice.sessionID) {
+                msg.guild.channels.get(msg.member.voice.sessionID).members.forEach((member) => {
+                  member.voice.setDeaf(true)
+                })
+              }
+              msg.channel.send(":x: You aren't in a voice channel!")
+            }
+            break;
           case "team":
             if (isCaptain || isPresident) {
               const teamroles = [
