@@ -68,11 +68,29 @@ client.on("message", (msg) => {
           case "deafenall":
             if (isHyper) {
               if (msg.member.voice.sessionID) {
-                msg.guild.channels.get(msg.member.voice.sessionID).members.forEach((member) => {
-                  member.voice.setDeaf(true)
-                })
+                msg.guild.channels.cache
+                  .get(msg.member.voice.channelID)
+                  .members.forEach((member) => {
+                    member.voice.setDeaf(true);
+                    member.voice.setMute(true);
+                  });
+              } else {
+                msg.channel.send(":x: You aren't in a voice channel!");
               }
-              msg.channel.send(":x: You aren't in a voice channel!")
+            }
+            break;
+          case "undeafenall":
+            if (isHyper) {
+              if (msg.member.voice.sessionID) {
+                msg.guild.channels.cache
+                  .get(msg.member.voice.channelID)
+                  .members.forEach((member) => {
+                    member.voice.setDeaf(false);
+                    member.voice.setMute(false);
+                  });
+              } else {
+                msg.channel.send(":x: You aren't in a voice channel!");
+              }
             }
             break;
           case "team":
@@ -272,11 +290,11 @@ function updateVerifiedStudents() {
                       guilduser.roles
                         .remove("768253432921849876")
                         .catch(console.error);
-                      client.users.cache
+                      /*client.users.cache
                         .get(guilduser.id)
                         .send(
                           "Hi! Just letting you know that your `Verified Brown` role was removed on the Brown Esports server. This is likely caused by a change in your username, or by you unlinking your Discord account in our membership form. If you changed your username, please update it on the membership registration form at https://bit.ly/brownesports."
-                        );
+                        );*/
                       console.log("-" + username);
                     } else {
                       console.error(
