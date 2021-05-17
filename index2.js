@@ -214,6 +214,28 @@ client.on("message", (msg) => {
                 });
             }
             break;
+          case "bc":
+            if (isHyper || isPresident || isEboard) {
+              msg.channel
+                .send({
+                embed: {
+                  color: 0x2f190e,
+                  title: message.substring(4),
+                  footer: {
+                    icon_url:
+                      "https://cdn.discordapp.com/avatars/" +
+                      userID +
+                      "/" +
+                      bot.users[userID].avatar,
+                    text: "Broadcast issued by " + user,
+                  },
+                },
+              });
+            } else {
+              noperm(msg.channel.id);
+            }
+
+            break;
         }
       });
     }

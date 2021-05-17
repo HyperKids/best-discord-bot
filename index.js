@@ -197,30 +197,30 @@ bot.on("message", function (user, userID, channelID, message, evt) {
           }
 
           break;
-        case "bc":
-          if (isHyper || isPresident || isEboard) {
-            bot.sendMessage({
-              to: channelID,
-              embed: {
-                color: 0x2f190e,
-                title: message.substring(4),
-                footer: {
-                  icon_url:
-                    "https://cdn.discordapp.com/avatars/" +
-                    userID +
-                    "/" +
-                    bot.users[userID].avatar,
-                  text: "Broadcast issued by " + user,
-                },
-              },
-            });
-            deletemsg1(channelID, evt.d.id, 0);
-          } else {
-            deletemsg(channelID, evt.d.id, 5000);
-            noperm(channelID, evt.d.id);
-          }
+        // case "bc":
+        //   if (isHyper || isPresident || isEboard) {
+        //     bot.sendMessage({
+        //       to: channelID,
+        //       embed: {
+        //         color: 0x2f190e,
+        //         title: message.substring(4),
+        //         footer: {
+        //           icon_url:
+        //             "https://cdn.discordapp.com/avatars/" +
+        //             userID +
+        //             "/" +
+        //             bot.users[userID].avatar,
+        //           text: "Broadcast issued by " + user,
+        //         },
+        //       },
+        //     });
+        //     deletemsg1(channelID, evt.d.id, 0);
+        //   } else {
+        //     deletemsg(channelID, evt.d.id, 5000);
+        //     noperm(channelID, evt.d.id);
+        //   }
 
-          break;
+        //   break;
         case "kill":
           if (isHyper) {
             success(channelID, evt.d.id);
