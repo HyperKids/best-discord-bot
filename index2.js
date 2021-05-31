@@ -3,10 +3,18 @@ const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
 const client = new Discord.Client();
-
-const prefix = "^";
+const yaml = require('js-yaml');
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
+
+var config;
+
+try {
+  var config = JSON.parse(fs.readFileSync("./config.yml", "utf-8"));
+} catch (e) {
+  console.error("The configuration failed to load!")
+  console.error(e)
+}
 
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
@@ -24,7 +32,7 @@ client.on("ready", () => {
 
 client.on("message", (msg) => {
   if (msg.author.id != "720120584155168771" && msg.type == "DEFAULT") {
-    if (msg.content.substring(0, 1) == prefix) {
+    if (msg.content.substring(0, 1) == config.prefix) {
       let message = msg.content;
       var args = message.substring(1).split(" ");
       var cmd = args[0];
