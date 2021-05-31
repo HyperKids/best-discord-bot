@@ -7,10 +7,10 @@ const yaml = require('js-yaml');
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
 
+// Load configuration file
 var config;
-
 try {
-  var config = JSON.parse(fs.readFileSync("./config.yml", "utf-8"));
+  var config = yaml.load(fs.readFileSync("./config.yml", "utf-8"));
 } catch (e) {
   console.error("The configuration failed to load!")
   console.error(e)
