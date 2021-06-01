@@ -4,6 +4,7 @@ const axios = require("axios");
 const fs = require("fs");
 const client = new Discord.Client();
 const yaml = require('js-yaml');
+const CountingGame = require('./modules/countinggame');
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
 
@@ -15,6 +16,8 @@ try {
   console.error("The configuration failed to load!")
   console.error(e)
 }
+
+var countinggames = [];
 
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
@@ -28,6 +31,9 @@ client.on("ready", () => {
     // name-colors channel, fetches reaction messages
     channel.messages.fetch();
   });
+  config.countinggamechannels.forEach((obj) => {
+    countinggames.push(new CountingGame.CountingGame(obj, client));
+  })
 });
 
 client.on("message", (msg) => {
@@ -224,8 +230,7 @@ client.on("message", (msg) => {
             break;
           case "bc":
             if (isHyper || isPresident || isEboard) {
-              msg.channel
-                .send({
+              msg.channel.send({
                 embed: {
                   color: 0x2f190e,
                   title: message.substring(4),
@@ -587,5 +592,7 @@ client.on("messageReactionAdd", (reaction, user) => {
     });
   }
 });
+
+
 
 client.login(process.env.DISCORDBOTTOKEN);
