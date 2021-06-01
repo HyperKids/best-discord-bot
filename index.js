@@ -376,55 +376,55 @@ bot.on("message", function (user, userID, channelID, message, evt) {
     }
   }
 
-  // The Counting Game Infinity
-  if (channelID == "720133492939161661") {
-    if (!numberValidation(message.split(" ")[0])) {
-      bot.sendMessage({
-        to: userID,
-        message:
-          "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `" +
-          message +
-          "`",
-      });
-      deletemsg1(channelID, evt.d.id, 0);
-    } else if (userID == lastUser) {
-      bot.sendMessage({
-        to: userID,
-        message:
-          "Please do not send consecutive messages in The Counting Game ∞. Your deleted message: `" +
-          message +
-          "`",
-      });
-      deletemsg1(channelID, evt.d.id, 0);
-    } else {
-      isLastNum(channelID, evt.d.id, userID, evt.d.type);
-    }
-  }
-
-  // Fragile Counting Game
-  if (channelID == "720323796111851572") {
-    if (!numberValidation(message.split(" ")[0])) {
-      bot.sendMessage({
-        to: userID,
-        message:
-          "Make sure the first word of your message is a number! Your deleted message: `" +
-          message +
-          "`",
-      });
-      deletemsg1(channelID, evt.d.id, 0);
-    } else if (userID == lastUserFragile) {
-      bot.sendMessage({
-        to: userID,
-        message:
-          "Please do not send consecutive messages in The Hardcore Counting Game. Your deleted message: `" +
-          message +
-          "`",
-      });
-      deletemsg1(channelID, evt.d.id, 0);
-    } else {
-      isLastNumFragile(channelID, evt.d.id, userID, evt.d.type, evt); // I know this is terrible, I don't want to refactor now
-    }
-  }
+//  // The Counting Game Infinity
+//  if (channelID == "720133492939161661") {
+//    if (!numberValidation(message.split(" ")[0])) {
+//      bot.sendMessage({
+//        to: userID,
+//        message:
+//          "Please only type consecutive numbers in The Counting Game ∞. Your deleted message: `" +
+//          message +
+//          "`",
+//      });
+//      deletemsg1(channelID, evt.d.id, 0);
+//    } else if (userID == lastUser) {
+//      bot.sendMessage({
+//        to: userID,
+//        message:
+//          "Please do not send consecutive messages in The Counting Game ∞. Your deleted message: `" +
+//          message +
+//          "`",
+//      });
+//      deletemsg1(channelID, evt.d.id, 0);
+//    } else {
+//      isLastNum(channelID, evt.d.id, userID, evt.d.type);
+//    }
+//  }
+//
+//  // Fragile Counting Game
+//  if (channelID == "720323796111851572") {
+//    if (!numberValidation(message.split(" ")[0])) {
+//      bot.sendMessage({
+//        to: userID,
+//        message:
+//          "Make sure the first word of your message is a number! Your deleted message: `" +
+//          message +
+//          "`",
+//      });
+//      deletemsg1(channelID, evt.d.id, 0);
+//    } else if (userID == lastUserFragile) {
+//      bot.sendMessage({
+//        to: userID,
+//        message:
+//          "Please do not send consecutive messages in The Hardcore Counting Game. Your deleted message: `" +
+//          message +
+//          "`",
+//      });
+//      deletemsg1(channelID, evt.d.id, 0);
+//    } else {
+//      isLastNumFragile(channelID, evt.d.id, userID, evt.d.type, evt); // I know this is terrible, I don't want to refactor now
+//    }
+//  }
 });
 
 bot.on("disconnect", function (msg, code) {
@@ -541,69 +541,69 @@ bot.on("disconnect", function (msg, code) {
 // }
 
 function isLastNumFragile(channelID, messageID, userID, type, evt) {
-  bot.getMessages(
-    {
-      channelID: "720323796111851572",
-      limit: 2,
-    },
-    function (e, m) {
-      ccounter = parseInt(m[0].content.split(" ")[0]);
-      lcounter = parseInt(m[1].content.split(" ")[0]);
-      if (
-        parseInt(ccounter) != parseInt(lcounter) + 1 &&
-        userID !== "720120584155168771" &&
-        ccounter !== NaN &&
-        type == 0
-      ) {
-        bot.sendMessage({
-          to: "720323796111851572",
-          message:
-            "0 <@" +
-            userID +
-            "> broke the " +
-            lcounter +
-            " long chain by typing " +
-            ccounter +
-            "! Starting from the top.",
-        });
+//  bot.getMessages(
+//    {
+//      channelID: "720323796111851572",
+//      limit: 2,
+//    },
+//    function (e, m) {
+//      ccounter = parseInt(m[0].content.split(" ")[0]);
+//      lcounter = parseInt(m[1].content.split(" ")[0]);
+//      if (
+//        parseInt(ccounter) != parseInt(lcounter) + 1 &&
+//        userID !== "720120584155168771" &&
+//        ccounter !== NaN &&
+//        type == 0
+//      ) {
+//        bot.sendMessage({
+//          to: "720323796111851572",
+//          message:
+//            "0 <@" +
+//            userID +
+//            "> broke the " +
+//            lcounter +
+//            " long chain by typing " +
+//            ccounter +
+//            "! Starting from the top.",
+//        });
         new Promise(function resetdunce(resolve, reject) {
           resolve(removeDunce());
         }).then(function () {
-          bot.addToRole({
-            serverID: evt.d.guild_id,
-            userID: userID,
-            roleID: "721563745343504384",
-          });
+//          bot.addToRole({
+//            serverID: evt.d.guild_id,
+//            userID: userID,
+//            roleID: "721563745343504384",
+//          });
           fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
             if (err) return console.log(err);
             console.log("Logged current timestamp");
           });
         });
         //deletemsg1(channelID, messageID, 0);}
-      } else if (type == 6) {
-        // handle pinning messages
-        deletemsg1(channelID, messageID, 0);
-      } else if (m[0].content.indexOf("\n") !== -1) {
-        deletemsg1(channelID, messageID, 0);
-        bot.sendMessage({
-          to: userID,
-          message:
-            "Please do not have multiple lines in your message. Your deleted message: `" +
-            m[0].content +
-            "`",
-        });
-      } else if (m[0].content.length > 255) {
-        deletemsg1(channelID, messageID, 0);
-        bot.sendMessage({
-          to: userID,
-          message:
-            "Messages need to be less than 256 characters. Your deleted message: `" +
-            m[0].content +
-            "`",
-        });
-      } else {
-        lastUserFragile = userID;
-      }
+//      } else if (type == 6) {
+//        // handle pinning messages
+//        deletemsg1(channelID, messageID, 0);
+//      } else if (m[0].content.indexOf("\n") !== -1) {
+//        deletemsg1(channelID, messageID, 0);
+//        bot.sendMessage({
+//          to: userID,
+//          message:
+//            "Please do not have multiple lines in your message. Your deleted message: `" +
+//            m[0].content +
+//            "`",
+//        });
+//      } else if (m[0].content.length > 255) {
+//        deletemsg1(channelID, messageID, 0);
+//        bot.sendMessage({
+//          to: userID,
+//          message:
+//            "Messages need to be less than 256 characters. Your deleted message: `" +
+//            m[0].content +
+//            "`",
+//        });
+//      } else {
+//        lastUserFragile = userID;
+//      }
     }
   );
 }
@@ -646,10 +646,10 @@ function removeDunce() {
   }
 }
 
-function numberValidation(num) {
-  // is the input a valid integer? in checks, use !numberValidation
-  return !isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num);
-}
+// function numberValidation(num) {
+//   // is the input a valid integer? in checks, use !numberValidation
+//   return !isNaN(num) && regnum.test(num) && regnoleadingzeros.test(num);
+// }
 
 // Utilities
 function deletemsg(channelID, messageID, length) {

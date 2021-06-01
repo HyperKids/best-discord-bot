@@ -17,7 +17,7 @@ try {
   console.error(e)
 }
 
-var countinggames = [];
+var countinggames = {};
 
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
@@ -32,11 +32,14 @@ client.on("ready", () => {
     channel.messages.fetch();
   });
   config.countinggamechannels.forEach((obj) => {
-    countinggames.push(new CountingGame.CountingGame(obj, client));
+    countinggames[obj.id] = (new CountingGame.CountingGame(obj, client));
   })
 });
 
 client.on("message", (msg) => {
+  if (countinggames[msg.channel.id]) {
+    return countinggames[msg.channel.id].newMessage(msg);
+  }
   if (msg.author.id != "720120584155168771" && msg.type == "DEFAULT") {
     if (msg.content.substring(0, 1) == config.prefix) {
       let message = msg.content;
