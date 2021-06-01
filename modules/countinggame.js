@@ -156,9 +156,7 @@ module.exports.dunceCheck = (client) => {
       if (err) return console.log(err);
       JSON.parse(data)
         .filter((obj) => {
-          return (
-            parseInt(obj.timestamp) < Date.now() - 1000 * 60 /*  * 60 * 24 */
-          );
+          return parseInt(obj.timestamp) < Date.now() - 1000 * 60 * 60 * 24;
         })
         .forEach((obj) => {
           client.guilds.fetch(obj.guildID).then((Guild) => {
@@ -169,9 +167,7 @@ module.exports.dunceCheck = (client) => {
           });
         });
       var newData = JSON.parse(data).filter((obj) => {
-        return (
-          parseInt(obj.timestamp) > Date.now() - 1000 * 60 /*  * 60 * 24 */
-        );
+        return parseInt(obj.timestamp) > Date.now() - 1000 * 60 * 60 * 24;
       });
       fs.writeFile("dunce-timestamp.json", JSON.stringify(newData), (err) => {
         if (err) throw err;
