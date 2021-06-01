@@ -566,20 +566,20 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 //            ccounter +
 //            "! Starting from the top.",
 //        });
-        new Promise(function resetdunce(resolve, reject) {
-          resolve(removeDunce());
-        }).then(function () {
+//        new Promise(function resetdunce(resolve, reject) {
+//          resolve(removeDunce());
+//        }).then(function () {
 //          bot.addToRole({
 //            serverID: evt.d.guild_id,
 //            userID: userID,
 //            roleID: "721563745343504384",
 //          });
-          fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
-            if (err) return console.log(err);
-            console.log("Logged current timestamp");
-          });
-        });
-        //deletemsg1(channelID, messageID, 0);}
+//          fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
+//            if (err) return console.log(err);
+//            console.log("Logged current timestamp");
+//          });
+//        });
+//        //deletemsg1(channelID, messageID, 0);}
 //      } else if (type == 6) {
 //        // handle pinning messages
 //        deletemsg1(channelID, messageID, 0);

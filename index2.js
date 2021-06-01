@@ -3,8 +3,8 @@ const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
 const client = new Discord.Client();
-const yaml = require('js-yaml');
-const CountingGame = require('./modules/countinggame');
+const yaml = require("js-yaml");
+const CountingGame = require("./modules/countinggame");
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
 
@@ -13,8 +13,8 @@ var config;
 try {
   var config = yaml.load(fs.readFileSync("./config.yml", "utf-8"));
 } catch (e) {
-  console.error("The configuration failed to load!")
-  console.error(e)
+  console.error("The configuration failed to load!");
+  console.error(e);
 }
 
 var countinggames = {};
@@ -22,8 +22,7 @@ var countinggames = {};
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
-  updateVerifiedStudents();
-  setInterval(() => updateVerifiedStudents(), 1000 * 60 * 60);
+  setInterval(() => updateVerifiedStudents(), 1000 * 60 * 1); // 1 minute
   client.guilds.fetch("442754791563722762").then((guild) => {
     guild.members.fetch();
   });
@@ -32,12 +31,15 @@ client.on("ready", () => {
     channel.messages.fetch();
   });
   config.countinggamechannels.forEach((obj) => {
-    countinggames[obj.id] = (new CountingGame.CountingGame(obj, client));
-  })
+    countinggames[obj.id] = new CountingGame.CountingGame(obj, client);
+  });
+  setInterval(() => {
+    CountingGame.dunceCheck(client);
+  }, 1000 * 60 * 5); // 5 minutes
 });
 
 client.on("message", (msg) => {
-  if (countinggames[msg.channel.id]) {
+  if (msg.author.id != "720120584155168771" && countinggames[msg.channel.id]) {
     return countinggames[msg.channel.id].newMessage(msg);
   }
   if (msg.author.id != "720120584155168771" && msg.type == "DEFAULT") {
@@ -595,7 +597,5 @@ client.on("messageReactionAdd", (reaction, user) => {
     });
   }
 });
-
-
 
 client.login(process.env.DISCORDBOTTOKEN);
