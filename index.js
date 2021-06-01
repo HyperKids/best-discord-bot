@@ -21,16 +21,16 @@ logger.level = "debug";
 
 bot.on("ready", function (evt) {
   logger.info(bot.username + " - (" + bot.id + ")");
-  bot.setPresence({
-    game: {
-      name: "the BEST server!",
-      type: 3,
-    },
-  });
-  setCounter();
-  setCounterFragile();
-  dunceCheck();
-  setInterval(() => dunceCheck(), 1000 * 60 * 60);
+//  bot.setPresence({
+//    game: {
+//      name: "the BEST server!",
+//      type: 3,
+//    },
+//  });
+//  setCounter();
+//  setCounterFragile();
+//  dunceCheck();
+//  setInterval(() => dunceCheck(), 1000 * 60 * 60);
 
   var memberCount = bot.servers["442754791563722762"].member_count;
   logger.info("Member Count: " + memberCount);
@@ -540,7 +540,7 @@ bot.on("disconnect", function (msg, code) {
 //   );
 // }
 
-function isLastNumFragile(channelID, messageID, userID, type, evt) {
+// function isLastNumFragile(channelID, messageID, userID, type, evt) {
 //  bot.getMessages(
 //    {
 //      channelID: "720323796111851572",
@@ -604,47 +604,47 @@ function isLastNumFragile(channelID, messageID, userID, type, evt) {
 //      } else {
 //        lastUserFragile = userID;
 //      }
-    }
-  );
-}
+//     }
+//   );
+// }
 
-function dunceCheck() {
-  console.log("Activated dunce check at " + Date.now().toString());
-  // check for dunce role and remove it if it's >1d
-  fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
-    if (err) {
-      fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
-        console.log("Created dunce-timestamp.txt");
-      });
-    }
-    fs.readFile("dunce-timestamp.txt", "utf8", (err, data) => {
-      if (err) return console.log(err);
-      if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
-        removeDunce();
-      }
-    });
-  });
-}
+// function dunceCheck() {
+//   console.log("Activated dunce check at " + Date.now().toString());
+//   // check for dunce role and remove it if it's >1d
+//   fs.access("dunce-timestamp.txt", fs.F_OK, (err) => {
+//     if (err) {
+//       fs.writeFile("dunce-timestamp.txt", Date.now(), (err) => {
+//         console.log("Created dunce-timestamp.txt");
+//       });
+//     }
+//     fs.readFile("dunce-timestamp.txt", "utf8", (err, data) => {
+//       if (err) return console.log(err);
+//       if (parseInt(data) < Date.now() - 1000 * 60 * 60 * 24) {
+//         removeDunce();
+//       }
+//     });
+//   });
+// }
 
-function removeDunce() {
-  console.log("Dunce removal fired at " + Date.now().toString());
-  var duncearr = Object.values(bot.servers["442754791563722762"].members)
-    .filter((m) => m.roles.includes("721563745343504384"))
-    .map((m) => m.id);
-  duncearr.forEach((dunceid, i) => {
-    bot.removeFromRole({
-      serverID: "442754791563722762",
-      userID: dunceid,
-      roleID: "721563745343504384",
-    });
-    if (duncearr.length == i + 1) {
-      return true;
-    }
-  });
-  if (duncearr.length == 0) {
-    return true;
-  }
-}
+// function removeDunce() {
+//   console.log("Dunce removal fired at " + Date.now().toString());
+//   var duncearr = Object.values(bot.servers["442754791563722762"].members)
+//     .filter((m) => m.roles.includes("721563745343504384"))
+//     .map((m) => m.id);
+//   duncearr.forEach((dunceid, i) => {
+//     bot.removeFromRole({
+//       serverID: "442754791563722762",
+//       userID: dunceid,
+//       roleID: "721563745343504384",
+//     });
+//     if (duncearr.length == i + 1) {
+//       return true;
+//     }
+//   });
+//   if (duncearr.length == 0) {
+//     return true;
+//   }
+// }
 
 // function numberValidation(num) {
 //   // is the input a valid integer? in checks, use !numberValidation
