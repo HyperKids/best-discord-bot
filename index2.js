@@ -114,14 +114,7 @@ client.on("message", (msg) => {
             break;
           case "team":
             if (isCaptain || isPresident) {
-              const teamroles = [
-                { name: "overwatch", id: "756983144900591627" },
-                { name: "dota", id: "779479223416389653" },
-                { name: "ultimate", id: "779479212222054486" },
-                { name: "hearthstone", id: "779479450412122193" },
-                { name: "siege", id: "759829367311433800" },
-                { name: "valorant", id: "823291439378989106" },
-              ];
+              const teamroles = config.teamroles;
               if (
                 args.length == 2 &&
                 args[0].match(/\d+/) &&
