@@ -164,7 +164,7 @@ client.on("message", (msg) => {
                 });
               } else {
                 msg.channel.send(
-                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}team teamname\` to view team members, and \`${prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${config.prefix}team teamname\` to view team members, and \`${config.prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
                     .map((obj) => obj.name)
                     .join("`, `")}\`.`
                 );
