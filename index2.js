@@ -52,64 +52,50 @@ client.on("message", (msg) => {
       var cld = cl[0];
       clargs = cl.splice(1);
 
-      var serverID = msg.guild.id;
-      msg.guild.members.fetch(msg.author.id).then((res) => {
-        var listOfRoles = res._roles;
-        var isPresident = listOfRoles.includes("445482959085240331");
-        var isEboard = listOfRoles.includes("442756821590081537");
-        var isPastEboard = listOfRoles.includes("588114684318580770");
-        var isCaptain = listOfRoles.includes("681557519931408397");
 
-        if (msg.author.id == "196685652249673728") {
-          isHyper = true;
-        }
+    var serverID = msg.guild.id;
+    msg.guild.members.fetch(msg.author.id).then((res) => {
+      var listOfRoles = res._roles;
+      var isPresident = listOfRoles.includes("445482959085240331");
+      var isEboard = listOfRoles.includes("442756821590081537");
+      var isPastEboard = listOfRoles.includes("588114684318580770");
+      var isCaptain = listOfRoles.includes("681557519931408397");
 
-        switch (cmd) {
-          // TODO: Add purge command
-          // TODO: Add bc command
-          // TODO: Add kill command
-          // TODO: Add resetpin command
-          // TODO: Add changelog command
-          case "noperm":
-            noperm(msg.channel.id);
-            break;
-          case "dev-1":
-            if (isHyper) {
-              msg.guild.members.fetch().then((members) => {
-                console.log(
-                  msg.guild.roles.cache
-                    .get("756983144900591627")
-                    .members.map((m) => m.user.tag)
-                );
-              });
-            }
-            break;
-          case "deafenall":
-            if (isHyper) {
-              if (msg.member.voice.sessionID) {
-                msg.guild.channels.cache
-                  .get(msg.member.voice.channelID)
-                  .members.forEach((member) => {
-                    member.voice.setDeaf(true);
-                    member.voice.setMute(true);
-                  });
-              } else {
-                msg.channel.send(":x: You aren't in a voice channel!");
-              }
-            }
-            break;
-          case "undeafenall":
-            if (isHyper) {
-              if (msg.member.voice.sessionID) {
-                msg.guild.channels.cache
-                  .get(msg.member.voice.channelID)
-                  .members.forEach((member) => {
-                    member.voice.setDeaf(false);
-                    member.voice.setMute(false);
-                  });
-              } else {
-                msg.channel.send(":x: You aren't in a voice channel!");
-              }
+      if (msg.author.id == "196685652249673728") {
+        isHyper = true;
+      }
+
+      switch (cmd) {
+        // TODO: Add purge command
+        // TODO: Add bc command
+        // TODO: Add kill command
+        // TODO: Add resetpin command
+        // TODO: Add changelog command
+        case "noperm":
+          noperm(msg.channel.id);
+          break;
+        case "dev-1":
+          if (isHyper) {
+            msg.guild.members.fetch().then((members) => {
+              console.log(
+                msg.guild.roles.cache
+                  .get("756983144900591627")
+                  .members.map((m) => m.user.tag)
+              );
+            });
+          }
+          break;
+        case "deafenall":
+          if (isHyper) {
+            if (msg.member.voice.sessionID) {
+              msg.guild.channels.cache
+                .get(msg.member.voice.channelID)
+                .members.forEach((member) => {
+                  member.voice.setDeaf(true);
+                  member.voice.setMute(true);
+                });
+            } else {
+              msg.channel.send(":x: You aren't in a voice channel!");
             }
             break;
           case "team":
@@ -163,48 +149,109 @@ client.on("message", (msg) => {
                 );
               }
             } else {
-              noperm(msg.channel.id);
+              msg.channel.send(":x: You aren't in a voice channel!");
             }
-            break;
-          case "react":
-            if (isEboard) {
-              let emote = client.emojis.cache.find(
-                (emoji) => emoji.name === args[1]
-              ).id;
-              if (args.length == 2 && args[0].match(/\d+/) && emote) {
-                msg.channel.messages
-                  .fetch(args[0])
-                  .then((message) => {
-                    message.react(emote);
-                  })
-                  .catch((err) => {
+          }
+          break;
+        case "team":
+          if (isCaptain || isPresident) {
+            const teamroles = [
+              { name: "overwatch", id: "756983144900591627" },
+              { name: "dota", id: "779479223416389653" },
+              { name: "ultimate", id: "779479212222054486" },
+              { name: "hearthstone", id: "779479450412122193" },
+              { name: "siege", id: "759829367311433800" },
+              { name: "valorant", id: "823291439378989106" },
+            ];
+            if (
+              args.length == 2 &&
+              args[0].match(/\d+/) &&
+              teamroles.map((obj) => obj.name).includes(args[1])
+            ) {
+              let roleid = teamroles.find((obj) => obj.name == args[1]).id;
+              let rolename = msg.guild.roles.cache.get(roleid).name;
+              let member = msg.guild.members
+                .fetch(args[0].match(/\d+/)[0])
+                .then((member) => {
+                  if (member.roles.cache.has(roleid)) {
+                    member.roles.remove(roleid).catch(console.error);
                     msg.channel.send(
-                      `:x: Invalid MessageID! Make sure the message is in this channel.`
+                      `:white_check_mark: Successfully removed \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` from \`${rolename}\`.`
                     );
-                  });
-              } else {
+                  } else {
+                    member.roles.add(roleid).catch(console.error);
+                    msg.channel.send(
+                      `:white_check_mark: Successfully added \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` to \`${rolename}\`.`
+                    );
+                  }
+                })
+                .catch(console.error);
+            } else if (
+              args.length == 1 &&
+              teamroles.map((obj) => obj.name).includes(args[0])
+            ) {
+              let roleid = teamroles.find((obj) => obj.name == args[0]).id;
+              let role = msg.guild.roles.cache.get(roleid);
+              let rolename = role.name;
+              let rolemembers = role.members;
+              msg.guild.members.fetch().then((members) => {
+                let membersWithRole = msg.guild.roles.cache
+                  .get(roleid)
+                  .members.map((m) => m.user.tag)
+                  .join(", ");
                 msg.channel.send(
-                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
+                  `Members in \`${rolename}\`: ${membersWithRole}`
                 );
-              }
+              });
             } else {
-              noperm(msg.channel.id);
+              msg.channel.send(
+                `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}team teamname\` to view team members, and \`${prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
+                  .map((obj) => obj.name)
+                  .join("`, `")}\`.`
+              );
             }
-            break;
-          case "umd":
-            if (isHyper) {
-              msg.guild.members
+          } else {
+            noperm(msg.channel.id);
+          }
+          break;
+        case "react":
+          if (isEboard) {
+            let emote = client.emojis.cache.find(
+              (emoji) => emoji.name === args[1]
+            ).id;
+            if (args.length == 2 && args[0].match(/\d+/) && emote) {
+              msg.channel.messages
                 .fetch(args[0])
-                .then((member) => updateMemberDividers(member));
+                .then((message) => {
+                  message.react(emote);
+                })
+                .catch((err) => {
+                  msg.channel.send(
+                    `:x: Invalid MessageID! Make sure the message is in this channel.`
+                  );
+                });
+            } else {
+              msg.channel.send(
+                `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
+              );
             }
-            break;
-          case "update-all-dividers":
-            if (isHyper) {
-              client.guilds.fetch("442754791563722762").then((guild) => {
-                guild.members.fetch().then((members) => {
-                  members.forEach((member) => {
-                    updateMemberDividers(member);
-                  });
+          } else {
+            noperm(msg.channel.id);
+          }
+          break;
+        case "umd":
+          if (isHyper) {
+            msg.guild.members
+              .fetch(args[0])
+              .then((member) => updateMemberDividers(member));
+          }
+          break;
+        case "update-all-dividers":
+          if (isHyper) {
+            client.guilds.fetch("442754791563722762").then((guild) => {
+              guild.members.fetch().then((members) => {
+                members.forEach((member) => {
+                  updateMemberDividers(member);
                 });
               });
             }
@@ -251,6 +298,7 @@ client.on("message", (msg) => {
       });
     }
   }
+
   if (msg.content.toLowerCase().includes("<@&720120584155168771>")) {
     msg.channel.send("pong");
   }
