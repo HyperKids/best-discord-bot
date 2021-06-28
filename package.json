@@ -12,6 +12,7 @@
     "discord.io": "woor/discord.io#gateway_v6",
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
+    "js-yaml": "^4.1.0",
     "jsmegahal": "^1.2.4",
     "winston": "^3.2.1"
   },

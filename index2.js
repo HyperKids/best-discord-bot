@@ -3,16 +3,26 @@ const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
 const client = new Discord.Client();
-
-const prefix = "^";
+const yaml = require("js-yaml");
+const CountingGame = require("./modules/countinggame");
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
+
+// Load configuration file
+var config;
+try {
+  var config = yaml.load(fs.readFileSync("./config.yml", "utf-8"));
+} catch (e) {
+  console.error("The configuration failed to load!");
+  console.error(e);
+}
+
+var countinggames = {};
 
 client.on("ready", () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
-  updateVerifiedStudents();
-  setInterval(() => updateVerifiedStudents(), 1000 * 60 * 60);
+  setInterval(() => updateVerifiedStudents(), 1000 * 60 * 1); // 1 minute
   client.guilds.fetch("442754791563722762").then((guild) => {
     guild.members.fetch();
   });
@@ -20,23 +30,28 @@ client.on("ready", () => {
     // name-colors channel, fetches reaction messages
     channel.messages.fetch();
   });
+  config.countinggamechannels.forEach((obj) => {
+    countinggames[obj.id] = new CountingGame.CountingGame(obj, client);
+  });
+  setInterval(() => {
+    CountingGame.dunceCheck(client);
+  }, 1000 * 60 * 5); // 5 minutes
 });
 
 client.on("message", (msg) => {
-  if (
-    !msg.content.startsWith(prefix) ||
-    msg.author.bot ||
-    !(msg.type == "DEFAULT")
-  )
-    return;
-  if (msg.content.substring(0, 1) == prefix) {
-    let message = msg.content;
-    var args = message.substring(1).split(" ");
-    var cmd = args[0];
-    args = args.splice(1);
-    var cl = message.substring(1).split("|");
-    var cld = cl[0];
-    clargs = cl.splice(1);
+  if (msg.author.id != "720120584155168771" && countinggames[msg.channel.id]) {
+    return countinggames[msg.channel.id].newMessage(msg);
+  }
+  if (msg.author.id != "720120584155168771" && msg.type == "DEFAULT") {
+    if (msg.content.substring(0, 1) == config.prefix) {
+      let message = msg.content;
+      var args = message.substring(1).split(" ");
+      var cmd = args[0];
+      args = args.splice(1);
+      var cl = message.substring(1).split("|");
+      var cld = cl[0];
+      clargs = cl.splice(1);
+
 
     var serverID = msg.guild.id;
     msg.guild.members.fetch(msg.author.id).then((res) => {
@@ -82,17 +97,57 @@ client.on("message", (msg) => {
             } else {
               msg.channel.send(":x: You aren't in a voice channel!");
             }
-          }
-          break;
-        case "undeafenall":
-          if (isHyper) {
-            if (msg.member.voice.sessionID) {
-              msg.guild.channels.cache
-                .get(msg.member.voice.channelID)
-                .members.forEach((member) => {
-                  member.voice.setDeaf(false);
-                  member.voice.setMute(false);
+            break;
+          case "team":
+            if (isCaptain || isPresident) {
+              const teamroles = config.teamroles;
+              if (
+                args.length == 2 &&
+                args[0].match(/\d+/) &&
+                teamroles.map((obj) => obj.name).includes(args[1])
+              ) {
+                let roleid = teamroles.find((obj) => obj.name == args[1]).id;
+                let rolename = msg.guild.roles.cache.get(roleid).name;
+                let member = msg.guild.members
+                  .fetch(args[0].match(/\d+/)[0])
+                  .then((member) => {
+                    if (member.roles.cache.has(roleid)) {
+                      member.roles.remove(roleid).catch(console.error);
+                      msg.channel.send(
+                        `:white_check_mark: Successfully removed \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` from \`${rolename}\`.`
+                      );
+                    } else {
+                      member.roles.add(roleid).catch(console.error);
+                      msg.channel.send(
+                        `:white_check_mark: Successfully added \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` to \`${rolename}\`.`
+                      );
+                    }
+                  })
+                  .catch(console.error);
+              } else if (
+                args.length == 1 &&
+                teamroles.map((obj) => obj.name).includes(args[0])
+              ) {
+                let roleid = teamroles.find((obj) => obj.name == args[0]).id;
+                let role = msg.guild.roles.cache.get(roleid);
+                let rolename = role.name;
+                let rolemembers = role.members;
+                msg.guild.members.fetch().then((members) => {
+                  let membersWithRole = msg.guild.roles.cache
+                    .get(roleid)
+                    .members.map((m) => m.user.tag)
+                    .join(", ");
+                  msg.channel.send(
+                    `Members in \`${rolename}\`: ${membersWithRole}`
+                  );
                 });
+              } else {
+                msg.channel.send(
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${config.prefix}team teamname\` to view team members, and \`${config.prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
+                    .map((obj) => obj.name)
+                    .join("`, `")}\`.`
+                );
+              }
             } else {
               msg.channel.send(":x: You aren't in a voice channel!");
             }
@@ -199,28 +254,49 @@ client.on("message", (msg) => {
                   updateMemberDividers(member);
                 });
               });
-            });
-          }
-          break;
-        case "best-colors":
-          if (isHyper) {
-            msg.channel
-              .send(
-                "**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nIf you are a <@&585841945386156033> or a <@&509190343892140033>, you can also see this channel to select your perk color! You can't choose any other colors until you're <@&682031537231101957>, though.\n\nYou're able to select the colors of the roles below your current level."
-              )
-              .then(() => {
-                bestcolors.forEach((obj) => {
-                  msg.channel
-                    .send(`<@&${obj.role}> - <@&${obj.color}>`)
-                    .then((message) => {
-                      message.react("🔸");
-                    });
+            }
+            break;
+          case "best-colors":
+            if (isHyper) {
+              msg.channel
+                .send(
+                  "**Name Color React Menu**\nBy being one of the <@&682031537231101957> users in this server, you've unlocked the ability to change your username color!\n\nIf you are a <@&585841945386156033> or a <@&849315551142346793>, you can also see this channel to select your perk color! You can't choose any other colors until you're <@&682031537231101957>, though.\n\nYou're able to select the colors of the roles below your current level."
+                )
+                .then(() => {
+                  bestcolors.forEach((obj) => {
+                    msg.channel
+                      .send(`<@&${obj.role}> - <@&${obj.color}>`)
+                      .then((message) => {
+                        message.react("🔸");
+                      });
+                  });
                 });
+            }
+            break;
+          case "bc":
+            if (isHyper || isPresident || isEboard) {
+              msg.channel.send({
+                embed: {
+                  color: 0x2f190e,
+                  title: message.substring(4),
+                  footer: {
+                    icon_url:
+                      "https://cdn.discordapp.com/avatars/" +
+                      userID +
+                      "/" +
+                      bot.users[userID].avatar,
+                    text: "Broadcast issued by " + user,
+                  },
+                },
               });
-          }
-          break;
-      }
-    });
+            } else {
+              noperm(msg.channel.id);
+            }
+
+            break;
+        }
+      });
+    }
   }
 
   if (msg.content.toLowerCase().includes("<@&720120584155168771>")) {

@@ -2,3 +2,4 @@
 node_modules/
 .DS_STORE
 dunce-timestamp.txt
+dunce-timestamp.json
