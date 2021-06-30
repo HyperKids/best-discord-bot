@@ -52,50 +52,64 @@ client.on("message", (msg) => {
       var cld = cl[0];
       clargs = cl.splice(1);
 
+      var serverID = msg.guild.id;
+      msg.guild.members.fetch(msg.author.id).then((res) => {
+        var listOfRoles = res._roles;
+        var isPresident = listOfRoles.includes("445482959085240331");
+        var isEboard = listOfRoles.includes("442756821590081537");
+        var isPastEboard = listOfRoles.includes("588114684318580770");
+        var isCaptain = listOfRoles.includes("681557519931408397");
 
-    var serverID = msg.guild.id;
-    msg.guild.members.fetch(msg.author.id).then((res) => {
-      var listOfRoles = res._roles;
-      var isPresident = listOfRoles.includes("445482959085240331");
-      var isEboard = listOfRoles.includes("442756821590081537");
-      var isPastEboard = listOfRoles.includes("588114684318580770");
-      var isCaptain = listOfRoles.includes("681557519931408397");
+        if (msg.author.id == "196685652249673728") {
+          isHyper = true;
+        }
 
-      if (msg.author.id == "196685652249673728") {
-        isHyper = true;
-      }
-
-      switch (cmd) {
-        // TODO: Add purge command
-        // TODO: Add bc command
-        // TODO: Add kill command
-        // TODO: Add resetpin command
-        // TODO: Add changelog command
-        case "noperm":
-          noperm(msg.channel.id);
-          break;
-        case "dev-1":
-          if (isHyper) {
-            msg.guild.members.fetch().then((members) => {
-              console.log(
-                msg.guild.roles.cache
-                  .get("756983144900591627")
-                  .members.map((m) => m.user.tag)
-              );
-            });
-          }
-          break;
-        case "deafenall":
-          if (isHyper) {
-            if (msg.member.voice.sessionID) {
-              msg.guild.channels.cache
-                .get(msg.member.voice.channelID)
-                .members.forEach((member) => {
-                  member.voice.setDeaf(true);
-                  member.voice.setMute(true);
-                });
-            } else {
-              msg.channel.send(":x: You aren't in a voice channel!");
+        switch (cmd) {
+          // TODO: Add purge command
+          // TODO: Add bc command
+          // TODO: Add kill command
+          // TODO: Add resetpin command
+          // TODO: Add changelog command
+          case "noperm":
+            noperm(msg.channel.id);
+            break;
+          case "dev-1":
+            if (isHyper) {
+              msg.guild.members.fetch().then((members) => {
+                console.log(
+                  msg.guild.roles.cache
+                    .get("756983144900591627")
+                    .members.map((m) => m.user.tag)
+                );
+              });
+            }
+            break;
+          case "deafenall":
+            if (isHyper) {
+              if (msg.member.voice.sessionID) {
+                msg.guild.channels.cache
+                  .get(msg.member.voice.channelID)
+                  .members.forEach((member) => {
+                    member.voice.setDeaf(true);
+                    member.voice.setMute(true);
+                  });
+              } else {
+                msg.channel.send(":x: You aren't in a voice channel!");
+              }
+            }
+            break;
+          case "undeafenall":
+            if (isHyper) {
+              if (msg.member.voice.sessionID) {
+                msg.guild.channels.cache
+                  .get(msg.member.voice.channelID)
+                  .members.forEach((member) => {
+                    member.voice.setDeaf(false);
+                    member.voice.setMute(false);
+                  });
+              } else {
+                msg.channel.send(":x: You aren't in a voice channel!");
+              }
             }
             break;
           case "team":
@@ -149,109 +163,48 @@ client.on("message", (msg) => {
                 );
               }
             } else {
-              msg.channel.send(":x: You aren't in a voice channel!");
+              noperm(msg.channel.id);
             }
-          }
-          break;
-        case "team":
-          if (isCaptain || isPresident) {
-            const teamroles = [
-              { name: "overwatch", id: "756983144900591627" },
-              { name: "dota", id: "779479223416389653" },
-              { name: "ultimate", id: "779479212222054486" },
-              { name: "hearthstone", id: "779479450412122193" },
-              { name: "siege", id: "759829367311433800" },
-              { name: "valorant", id: "823291439378989106" },
-            ];
-            if (
-              args.length == 2 &&
-              args[0].match(/\d+/) &&
-              teamroles.map((obj) => obj.name).includes(args[1])
-            ) {
-              let roleid = teamroles.find((obj) => obj.name == args[1]).id;
-              let rolename = msg.guild.roles.cache.get(roleid).name;
-              let member = msg.guild.members
-                .fetch(args[0].match(/\d+/)[0])
-                .then((member) => {
-                  if (member.roles.cache.has(roleid)) {
-                    member.roles.remove(roleid).catch(console.error);
+            break;
+          case "react":
+            if (isEboard) {
+              let emote = client.emojis.cache.find(
+                (emoji) => emoji.name === args[1]
+              ).id;
+              if (args.length == 2 && args[0].match(/\d+/) && emote) {
+                msg.channel.messages
+                  .fetch(args[0])
+                  .then((message) => {
+                    message.react(emote);
+                  })
+                  .catch((err) => {
                     msg.channel.send(
-                      `:white_check_mark: Successfully removed \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` from \`${rolename}\`.`
+                      `:x: Invalid MessageID! Make sure the message is in this channel.`
                     );
-                  } else {
-                    member.roles.add(roleid).catch(console.error);
-                    msg.channel.send(
-                      `:white_check_mark: Successfully added \`${member.user.username}#${member.user.discriminator} (${member.user.id})\` to \`${rolename}\`.`
-                    );
-                  }
-                })
-                .catch(console.error);
-            } else if (
-              args.length == 1 &&
-              teamroles.map((obj) => obj.name).includes(args[0])
-            ) {
-              let roleid = teamroles.find((obj) => obj.name == args[0]).id;
-              let role = msg.guild.roles.cache.get(roleid);
-              let rolename = role.name;
-              let rolemembers = role.members;
-              msg.guild.members.fetch().then((members) => {
-                let membersWithRole = msg.guild.roles.cache
-                  .get(roleid)
-                  .members.map((m) => m.user.tag)
-                  .join(", ");
+                  });
+              } else {
                 msg.channel.send(
-                  `Members in \`${rolename}\`: ${membersWithRole}`
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
                 );
-              });
+              }
             } else {
-              msg.channel.send(
-                `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}team teamname\` to view team members, and \`${prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
-                  .map((obj) => obj.name)
-                  .join("`, `")}\`.`
-              );
+              noperm(msg.channel.id);
             }
-          } else {
-            noperm(msg.channel.id);
-          }
-          break;
-        case "react":
-          if (isEboard) {
-            let emote = client.emojis.cache.find(
-              (emoji) => emoji.name === args[1]
-            ).id;
-            if (args.length == 2 && args[0].match(/\d+/) && emote) {
-              msg.channel.messages
+            break;
+          case "umd":
+            if (isHyper) {
+              msg.guild.members
                 .fetch(args[0])
-                .then((message) => {
-                  message.react(emote);
-                })
-                .catch((err) => {
-                  msg.channel.send(
-                    `:x: Invalid MessageID! Make sure the message is in this channel.`
-                  );
-                });
-            } else {
-              msg.channel.send(
-                `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
-              );
+                .then((member) => updateMemberDividers(member));
             }
-          } else {
-            noperm(msg.channel.id);
-          }
-          break;
-        case "umd":
-          if (isHyper) {
-            msg.guild.members
-              .fetch(args[0])
-              .then((member) => updateMemberDividers(member));
-          }
-          break;
-        case "update-all-dividers":
-          if (isHyper) {
-            client.guilds.fetch("442754791563722762").then((guild) => {
-              guild.members.fetch().then((members) => {
-                members.forEach((member) => {
-                  updateMemberDividers(member);
+            break;
+          case "update-all-dividers":
+            if (isHyper) {
+              client.guilds.fetch("442754791563722762").then((guild) => {
+                guild.members.fetch().then((members) => {
+                  members.forEach((member) => {
+                    updateMemberDividers(member);
+                  });
                 });
               });
             }
@@ -294,11 +247,161 @@ client.on("message", (msg) => {
             }
 
             break;
+            case "embed":
+              if (isHyper) {
+                msg.channel.send(
+                  "@everyone It is our honor and privilege to announce the 2021-2022 Executive Board! We're looking forward to the new semester with a return to in-person activities! There are many projects in the works, and we're excited about the future of Brown Esports.\n\nBEST,\nIsaac Kim and William Sun\n\u200B",
+                  {
+                    embed: {
+                      "title": "Announcing the 2021-2022 Brown Esports Executive Board!",
+                      "description": "Please give them a warm welcome!",
+                      "color": 9905445,
+                      "timestamp": "2021-06-19T22:06:22.060Z",
+                      "footer": {
+                        "icon_url": "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
+                        "text": "* = Head"
+                      },
+                      "author": {
+                        "name": "Isaac Kim and William Sun",
+                        "icon_url": "https://media.discordapp.net/attachments/611791584190791682/720167116741017620/unknown.png"
+                      },
+                      "fields": [
+                        {
+                          "name": "**Presidents**",
+                          "value": "Isaac Kim (<@196685652249673728>)\nWilliam Sun (<@350318311147307009>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**VP of Competitive Esports**",
+                          "value": "Austin McHale (<@467860945990057996>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Treasurer**",
+                          "value": "Ian Kim (<@312771544432508929>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**VP of Internal Affairs**",
+                          "value": "Austin Phan (<@297508273710694400>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Secretary**",
+                          "value": "Angel Arrazola (<@167424623691038720>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**VP of External Affairs**",
+                          "value": "Linus Sun (<@231888393968156692>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Team Captains**",
+                          "value": "Austin McHale (<@467860945990057996>, Hearthstone)\nChristopher Norve (<@169598681706790922>, Rocket League)\nDylan Hu (<@241744161777254410>, VALORANT)\nEric Steinberg (<@272190108424208385>, Overwatch)\nGuillaume Pagnier (<@217830695899234304>, Dota 2)\nIzzy Pulzone (<@442128451659628545>, League of Legends)\nJamie Gallagher (<@246434885043093514>, Smash Ultimate)\nJohn Beckerle (<@453426164950630401>, Rainbow Six: Siege)\nLuis Tsatsos Montoliu (<@196426422343041024>, Smash Ultimate)\nSamuel Rhee (<@188080156219408384>, Smash Ultimate)\n**Assistant Captain** Nicholas Vadasz (<@280185198073741323>, VALORANT)",
+                          "inline": false
+                        },
+                        {
+                          "name": "**Competitive Esports Committee**",
+                          "value": "Austin McHale* (<@467860945990057996>)\nGonzalo Gonzalez Avitia (<@140285708010127360>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Diversity and Inclusion Director**",
+                          "value": "Alexander Cadillo (<@617674664134574080>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Communications and Marketing**",
+                          "value": "Linus Sun* (<@231888393968156692>)\nAnthony Ragucci (<@236548456070643712>)\nSamuel Rhee (<@188080156219408384>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Content Creation Committee**",
+                          "value": "Anthony Ragucci (<@236548456070643712>)\nBrandyn Chan (<@197956459445747712>)\nIan Kim (<@312771544432508929>)\nJamie Gallagher (<@246434885043093514>)\nSamuel Rhee (<@188080156219408384>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Events Committee**",
+                          "value": "Benjamin Schornstein* (<@369620257234485248>)\nNicholas Bottone* (<@261976608519225345>)\nKevin Lu (<@279847119009873930>)\nLinus Sun (<@231888393968156692>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Operations Committee**",
+                          "value": "Izzy Pulzone* (<@442128451659628545>)\nAngel Arrazola (<@167424623691038720>)\nBenjamin Schornstein (<@369620257234485248>)\nLuis Tsatsos Montoliu (<@196426422343041024>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Minecraft Committee**",
+                          "value": "Tiffany Zhang* (<@131822857255780352>)\nTyler Gurth* (<@189795800723750912>)\nNicholas Bottone (<@261976608519225345>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Artist (Staff)**",
+                          "value": "Anthony Ragucci (<@236548456070643712>)\nAugustina Wang (<@548270748679274501>)\nLinus Sun (<@231888393968156692>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Developer (Staff)**",
+                          "value": "Angel Arrazola (<@167424623691038720>)\nBenjamin S. (<@369620257234485248>)\nIsaac Kim (<@196685652249673728>)\nLinus Sun (<@231888393968156692>)\nNicholas Bottone (<@261976608519225345>)\nTyler Gurth (<@189795800723750912>)\nWilliam Sun (<@350318311147307009>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "**Past Presidents**",
+                          "value": "Derek Xu '20 (<@212089156774395904>)\nGriffin Beels '21 (<@122091495112179712>) o7\nJoshua Lu '18 (<@133667136915636225>)\nTomoki Ishizuka '19 (<@126505956879237120>)\nWilly Lee '18 (<@175731276735578112>)",
+                          "inline": true
+                        },
+                        {
+                          "name": "​",
+                          "value": "​",
+                          "inline": true
+                        }
+                      ]
+                    }
+                   } //-changelog |1|2|3|true|5|6|7|true|8|9|true
+                );
+                msg.delete();
+              }
+              break;
         }
       });
     }
   }
-
   if (msg.content.toLowerCase().includes("<@&720120584155168771>")) {
     msg.channel.send("pong");
   }
