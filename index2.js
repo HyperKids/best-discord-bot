@@ -742,4 +742,39 @@ client.on("messageReactionAdd", (reaction, user) => {
   }
 });
 
+client.on("voiceStateUpdate", (oldUser, newUser) => {
+  const oldChannel = oldUser.channel;
+  const newChannel = newUser.channel;
+
+  if (
+    oldChannel &&
+    oldChannel.name.startsWith("🔒") &&
+    oldChannel.members.size === 0
+  ) {
+    // User left a channel, and the channel is now empty
+    oldChannel.updateOverwrite(
+      oldChannel.guild.roles.everyone,
+      {
+        VIEW_CHANNEL: false,
+      },
+      "Voice channel made invisible after last user left"
+    );
+  }
+
+  if (
+    newChannel &&
+    newChannel.name.startsWith("🔒") &&
+    newChannel.members.size === 1
+  ) {
+    // User joined a channel, and is the first to join
+    newChannel.updateOverwrite(
+      newChannel.guild.roles.everyone,
+      {
+        VIEW_CHANNEL: true,
+      },
+      "Voice channel made visible after user joined"
+    );
+  }
+});
+
 client.login(process.env.DISCORDBOTTOKEN);
