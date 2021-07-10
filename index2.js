@@ -772,7 +772,7 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
     newChannel.updateOverwrite(
       newChannel.guild.roles.everyone,
       {
-        VIEW_CHANNEL: true,
+        VIEW_CHANNEL: null,
       },
       "Voice channel made visible after user joined"
     );
