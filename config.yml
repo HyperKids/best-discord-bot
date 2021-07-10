@@ -1,5 +1,6 @@
 prefix: "^"
 privateChannelPrefix: "🔒"
+privateChannelSuffix: "᲼"
 countinggamechannels:
   - id: "720133492939161661"
   - id: "720323796111851572"
