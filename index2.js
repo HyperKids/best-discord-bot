@@ -748,7 +748,7 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
 
   if (
     oldChannel &&
-    oldChannel.name.includes(config.privateChannelString) &&
+    config.privateChannelString.some(substring => oldChannel.name.includes(substring)) &&
     oldChannel.members.size === 0
   ) {
     // User left a channel, and the channel is now empty
@@ -763,7 +763,7 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
 
   if (
     newChannel &&
-    newChannel.name.includes(config.privateChannelString) &&
+    config.privateChannelString.some(substring => newChannel.name.includes(substring)) &&
     newChannel.members.size === 1
   ) {
     // User joined a channel, and is the first to join
