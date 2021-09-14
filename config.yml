@@ -9,6 +9,10 @@ countinggamechannels:
 teamroles:
   - name: "overwatch"
     id: "756983144900591627"
+  - name: "overwatchbrown"
+    id: "887134730087186443"
+  - name: "overwatchred"
+    id: "887134796873089044"
   - name: "dota"
     id: "779479223416389653"
   - name: "ultimate"
