@@ -81,6 +81,7 @@ class CountingGame {
             ccounter +
             "! Starting from the top."
         );
+        this.counter = 0
         msg.channel.guild.members.fetch(msg.author).then((GuildMember) => {
           GuildMember.roles.add(this.dunceRoleID);
           msg.author.send(
