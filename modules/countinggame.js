@@ -82,6 +82,7 @@ class CountingGame {
             "! Starting from the top."
         );
         this.counter = 0
+        this.lastUser = ""
         msg.channel.guild.members.fetch(msg.author).then((GuildMember) => {
           GuildMember.roles.add(this.dunceRoleID);
           msg.author.send(
