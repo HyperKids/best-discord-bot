@@ -8,7 +8,7 @@
   "license": "none",
   "private": true,
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "discord.io": "woor/discord.io#gateway_v6",
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
