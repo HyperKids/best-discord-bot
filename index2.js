@@ -1,10 +1,24 @@
 require("dotenv").config();
+
+if (
+  !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+  !process.env.GOOGLE_PRIVATE_KEY ||
+  !process.env.DISCORDBOTTOKEN ||
+  !process.env.GOOGLE_SPREADSHEET
+) {
+  console.error("Environment variables in .env not defined!");
+  process.exit(1);
+}
+
 const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
 const client = new Discord.Client();
 const yaml = require("js-yaml");
 const CountingGame = require("./modules/countinggame");
+
+const { GoogleSpreadsheet } = require("google-spreadsheet");
+const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET);
 
 const bestcolors = JSON.parse(fs.readFileSync("./best-colors.json", "utf-8"));
 
@@ -19,10 +33,18 @@ try {
 
 var countinggames = {};
 
-client.on("ready", () => {
+client.on("ready", async () => {
   client.user.setActivity("the BEST server!", { type: "WATCHING" });
   console.log(`Logged in as ${client.user.tag}!`);
+
+  // Setup Google Sheets verification system
+  await doc.useServiceAccountAuth({
+    client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY,
+  });
+  await doc.loadInfo();
   setInterval(() => updateVerifiedStudents(), 1000 * 60 * 1); // 1 minute
+
   client.guilds.fetch("442754791563722762").then((guild) => {
     guild.members.fetch();
   });
@@ -157,7 +179,11 @@ client.on("message", (msg) => {
                 });
               } else {
                 msg.channel.send(
-                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${config.prefix}team teamname\` to view team members, and \`${config.prefix}team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${
+                    config.prefix
+                  }team teamname\` to view team members, and \`${
+                    config.prefix
+                  }team @username teamname\`, where @username is the user, and teamname is one of \`${teamroles
                     .map((obj) => obj.name)
                     .join("`, `")}\`.`
                 );
@@ -247,157 +273,171 @@ client.on("message", (msg) => {
             }
 
             break;
-            case "embed":
-              if (isHyper) {
-                msg.channel.send(
-                  "@everyone It is our honor and privilege to announce the 2021-2022 Executive Board! We're looking forward to the new semester with a return to in-person activities! There are many projects in the works, and we're excited about the future of Brown Esports.\n\nBEST,\nIsaac Kim and William Sun\n\u200B",
-                  {
-                    embed: {
-                      "title": "Announcing the 2021-2022 Brown Esports Executive Board!",
-                      "description": "Please give them a warm welcome!",
-                      "color": 9905445,
-                      "timestamp": "2021-06-19T22:06:22.060Z",
-                      "footer": {
-                        "icon_url": "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
-                        "text": "* = Head"
+          case "embed":
+            if (isHyper) {
+              msg.channel.send(
+                "@everyone It is our honor and privilege to announce the 2021-2022 Executive Board! We're looking forward to the new semester with a return to in-person activities! There are many projects in the works, and we're excited about the future of Brown Esports.\n\nBEST,\nIsaac Kim and William Sun\n\u200B",
+                {
+                  embed: {
+                    title:
+                      "Announcing the 2021-2022 Brown Esports Executive Board!",
+                    description: "Please give them a warm welcome!",
+                    color: 9905445,
+                    timestamp: "2021-06-19T22:06:22.060Z",
+                    footer: {
+                      icon_url:
+                        "https://media.discordapp.net/attachments/611791584190791682/720149464467243069/BEST_logo_transparent_1.png",
+                      text: "* = Head",
+                    },
+                    author: {
+                      name: "Isaac Kim and William Sun",
+                      icon_url:
+                        "https://media.discordapp.net/attachments/611791584190791682/720167116741017620/unknown.png",
+                    },
+                    fields: [
+                      {
+                        name: "**Presidents**",
+                        value:
+                          "Isaac Kim (<@196685652249673728>)\nWilliam Sun (<@350318311147307009>)",
+                        inline: true,
                       },
-                      "author": {
-                        "name": "Isaac Kim and William Sun",
-                        "icon_url": "https://media.discordapp.net/attachments/611791584190791682/720167116741017620/unknown.png"
+                      {
+                        name: "**VP of Competitive Esports**",
+                        value: "Austin McHale (<@467860945990057996>)",
+                        inline: true,
                       },
-                      "fields": [
-                        {
-                          "name": "**Presidents**",
-                          "value": "Isaac Kim (<@196685652249673728>)\nWilliam Sun (<@350318311147307009>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**VP of Competitive Esports**",
-                          "value": "Austin McHale (<@467860945990057996>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Treasurer**",
-                          "value": "Ian Kim (<@312771544432508929>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**VP of Internal Affairs**",
-                          "value": "Austin Phan (<@297508273710694400>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Secretary**",
-                          "value": "Angel Arrazola (<@167424623691038720>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**VP of External Affairs**",
-                          "value": "Linus Sun (<@231888393968156692>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Team Captains**",
-                          "value": "Austin McHale (<@467860945990057996>, Hearthstone)\nChristopher Norve (<@169598681706790922>, Rocket League)\nDylan Hu (<@241744161777254410>, VALORANT)\nEric Steinberg (<@272190108424208385>, Overwatch)\nGuillaume Pagnier (<@217830695899234304>, Dota 2)\nIzzy Pulzone (<@442128451659628545>, League of Legends)\nJamie Gallagher (<@246434885043093514>, Smash Ultimate)\nJohn Beckerle (<@453426164950630401>, Rainbow Six: Siege)\nLuis Tsatsos Montoliu (<@196426422343041024>, Smash Ultimate)\nSamuel Rhee (<@188080156219408384>, Smash Ultimate)\n**Assistant Captain** Nicholas Vadasz (<@280185198073741323>, VALORANT)",
-                          "inline": false
-                        },
-                        {
-                          "name": "**Competitive Esports Committee**",
-                          "value": "Austin McHale* (<@467860945990057996>)\nGonzalo Gonzalez Avitia (<@140285708010127360>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Diversity and Inclusion Director**",
-                          "value": "Alexander Cadillo (<@617674664134574080>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Communications and Marketing**",
-                          "value": "Linus Sun* (<@231888393968156692>)\nAnthony Ragucci (<@236548456070643712>)\nSamuel Rhee (<@188080156219408384>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Content Creation Committee**",
-                          "value": "Anthony Ragucci (<@236548456070643712>)\nBrandyn Chan (<@197956459445747712>)\nIan Kim (<@312771544432508929>)\nJamie Gallagher (<@246434885043093514>)\nSamuel Rhee (<@188080156219408384>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Events Committee**",
-                          "value": "Benjamin Schornstein* (<@369620257234485248>)\nNicholas Bottone* (<@261976608519225345>)\nKevin Lu (<@279847119009873930>)\nLinus Sun (<@231888393968156692>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Operations Committee**",
-                          "value": "Izzy Pulzone* (<@442128451659628545>)\nAngel Arrazola (<@167424623691038720>)\nBenjamin Schornstein (<@369620257234485248>)\nLuis Tsatsos Montoliu (<@196426422343041024>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Minecraft Committee**",
-                          "value": "Tiffany Zhang* (<@131822857255780352>)\nTyler Gurth* (<@189795800723750912>)\nNicholas Bottone (<@261976608519225345>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Artist (Staff)**",
-                          "value": "Anthony Ragucci (<@236548456070643712>)\nAugustina Wang (<@548270748679274501>)\nLinus Sun (<@231888393968156692>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Developer (Staff)**",
-                          "value": "Angel Arrazola (<@167424623691038720>)\nBenjamin S. (<@369620257234485248>)\nIsaac Kim (<@196685652249673728>)\nLinus Sun (<@231888393968156692>)\nNicholas Bottone (<@261976608519225345>)\nTyler Gurth (<@189795800723750912>)\nWilliam Sun (<@350318311147307009>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "**Past Presidents**",
-                          "value": "Derek Xu '20 (<@212089156774395904>)\nGriffin Beels '21 (<@122091495112179712>) o7\nJoshua Lu '18 (<@133667136915636225>)\nTomoki Ishizuka '19 (<@126505956879237120>)\nWilly Lee '18 (<@175731276735578112>)",
-                          "inline": true
-                        },
-                        {
-                          "name": "​",
-                          "value": "​",
-                          "inline": true
-                        }
-                      ]
-                    }
-                   } //-changelog |1|2|3|true|5|6|7|true|8|9|true
-                );
-                msg.delete();
-              }
-              break;
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Treasurer**",
+                        value: "Ian Kim (<@312771544432508929>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**VP of Internal Affairs**",
+                        value: "Austin Phan (<@297508273710694400>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Secretary**",
+                        value: "Angel Arrazola (<@167424623691038720>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**VP of External Affairs**",
+                        value: "Linus Sun (<@231888393968156692>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Team Captains**",
+                        value:
+                          "Austin McHale (<@467860945990057996>, Hearthstone)\nChristopher Norve (<@169598681706790922>, Rocket League)\nDylan Hu (<@241744161777254410>, VALORANT)\nEric Steinberg (<@272190108424208385>, Overwatch)\nGuillaume Pagnier (<@217830695899234304>, Dota 2)\nIzzy Pulzone (<@442128451659628545>, League of Legends)\nJamie Gallagher (<@246434885043093514>, Smash Ultimate)\nJohn Beckerle (<@453426164950630401>, Rainbow Six: Siege)\nLuis Tsatsos Montoliu (<@196426422343041024>, Smash Ultimate)\nSamuel Rhee (<@188080156219408384>, Smash Ultimate)\n**Assistant Captain** Nicholas Vadasz (<@280185198073741323>, VALORANT)",
+                        inline: false,
+                      },
+                      {
+                        name: "**Competitive Esports Committee**",
+                        value:
+                          "Austin McHale* (<@467860945990057996>)\nGonzalo Gonzalez Avitia (<@140285708010127360>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**Diversity and Inclusion Director**",
+                        value: "Alexander Cadillo (<@617674664134574080>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Communications and Marketing**",
+                        value:
+                          "Linus Sun* (<@231888393968156692>)\nAnthony Ragucci (<@236548456070643712>)\nSamuel Rhee (<@188080156219408384>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**Content Creation Committee**",
+                        value:
+                          "Anthony Ragucci (<@236548456070643712>)\nBrandyn Chan (<@197956459445747712>)\nIan Kim (<@312771544432508929>)\nJamie Gallagher (<@246434885043093514>)\nSamuel Rhee (<@188080156219408384>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Events Committee**",
+                        value:
+                          "Benjamin Schornstein* (<@369620257234485248>)\nNicholas Bottone* (<@261976608519225345>)\nKevin Lu (<@279847119009873930>)\nLinus Sun (<@231888393968156692>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**Operations Committee**",
+                        value:
+                          "Izzy Pulzone* (<@442128451659628545>)\nAngel Arrazola (<@167424623691038720>)\nBenjamin Schornstein (<@369620257234485248>)\nLuis Tsatsos Montoliu (<@196426422343041024>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Minecraft Committee**",
+                        value:
+                          "Tiffany Zhang* (<@131822857255780352>)\nTyler Gurth* (<@189795800723750912>)\nNicholas Bottone (<@261976608519225345>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**Artist (Staff)**",
+                        value:
+                          "Anthony Ragucci (<@236548456070643712>)\nAugustina Wang (<@548270748679274501>)\nLinus Sun (<@231888393968156692>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                      {
+                        name: "**Developer (Staff)**",
+                        value:
+                          "Angel Arrazola (<@167424623691038720>)\nBenjamin S. (<@369620257234485248>)\nIsaac Kim (<@196685652249673728>)\nLinus Sun (<@231888393968156692>)\nNicholas Bottone (<@261976608519225345>)\nTyler Gurth (<@189795800723750912>)\nWilliam Sun (<@350318311147307009>)",
+                        inline: true,
+                      },
+                      {
+                        name: "**Past Presidents**",
+                        value:
+                          "Derek Xu '20 (<@212089156774395904>)\nGriffin Beels '21 (<@122091495112179712>) o7\nJoshua Lu '18 (<@133667136915636225>)\nTomoki Ishizuka '19 (<@126505956879237120>)\nWilly Lee '18 (<@175731276735578112>)",
+                        inline: true,
+                      },
+                      {
+                        name: "​",
+                        value: "​",
+                        inline: true,
+                      },
+                    ],
+                  },
+                } //-changelog |1|2|3|true|5|6|7|true|8|9|true
+              );
+              msg.delete();
+            }
+            break;
         }
       });
     }
@@ -431,76 +471,64 @@ function noperm(channelID) {
   });
 }
 
-function updateVerifiedStudents() {
-  console.log("updateVerifiedStudents was called at " + new Date());
-  if (process.env.GCP_API_KEY) {
-    axios
-      .get(
-        `https://sheets.googleapis.com/v4/spreadsheets/1AYBuSmPIvI8iSi5Tnpstzm-wGjEUGiICzO0iZLOYrhA/values/DiscordTags!A:A?majorDimension=COLUMNS&key=${process.env.GCP_API_KEY}`
-      )
-      .then((res) => {
-        client.guilds.fetch("442754791563722762").then((guild) => {
-          guild.members.fetch().then((members) => {
-            var verifiedrolemembers = guild.roles.cache
-              .get("768253432921849876")
-              .members.map((m) => m.user.tag.toLowerCase());
-            var gsheettags = res.data.values[0].map((v) => v.toLowerCase());
-            var posdiff = gsheettags
-              .filter((x) => !verifiedrolemembers.includes(x.toLowerCase()))
-              .map((v) => v.toLowerCase()); // filters to differences between the two arrays - verifiedrolemembers is
-            // current members on the server with the "Verified" role, res.data.values[0]
-            // is Google Form list of DiscordTags that should have the role
-            // var posdiff = diff // diff.filter((x) => gsheettags.includes(x));
-            var negdiff = verifiedrolemembers
-              .filter((x) => !gsheettags.includes(x.toLowerCase()))
-              .map((v) => v.toLowerCase()); // diff.filter((x) => verifiedrolemembers.includes(x));
-            var diff = posdiff.concat(negdiff);
-            diff.forEach((DiscordTag) => {
-              let user = client.users.cache.find(
-                (u) => u.tag.toLowerCase() === DiscordTag.toLowerCase()
-              )?.id;
-              if (user) {
-                let guilduser = guild.members
-                  .fetch(user)
-                  .then((guilduser) => {
-                    let username = guilduser.user.username.toLowerCase();
-                    let discrim = guilduser.user.discriminator;
-                    if (posdiff.includes(username + "#" + discrim)) {
-                      guilduser.roles
-                        .add("768253432921849876")
-                        .catch(console.error);
-                      console.log("+" + username);
-                    } else if (negdiff.includes(username + "#" + discrim)) {
-                      guilduser.roles
-                        .remove("768253432921849876")
-                        .catch(console.error);
-                      /*client.users.cache
-                        .get(guilduser.id)
-                        .send(
-                          "Hi! Just letting you know that your `Verified Brown` role was removed on the Brown Esports server. This is likely caused by a change in your username, or by you unlinking your Discord account in our membership form. If you changed your username, please update it on the membership registration form at https://bit.ly/brownesports."
-                        );*/
-                      console.log("-" + username);
-                    } else {
-                      console.error(
-                        `No clue what to do with this user! ${
-                          username + "#" + discrim
-                        }`
-                      );
-                    }
-                  })
-                  .catch(console.error);
-              } else {
-                console.log(`${DiscordTag} is invalid!`);
-              }
-            });
-          });
-        });
-      });
-  } else {
-    console.log(
-      "GCP_API_KEY in .env is not defined! Unable to update verified student roles."
+async function updateVerifiedStudents() {
+  /* Three columns in the Google Sheet:
+   * 1. DiscordTag (automatically filled in by Google Form)
+   * 2. DiscordTagCache (copy of DiscordTag made by this function)
+   * 3. DiscordId (filled in by this function)
+   * If DiscordTagCache is different from DiscordTag, then the DiscordId is updated.
+   */
+  const promises = [];
+
+  const sheet = doc.sheetsByIndex[0];
+  const rows = await sheet.getRows();
+  const serverId = "442754791563722762";
+  const roleId = "768253432921849876";
+
+  // Get the DiscordIds from the DiscordTags (if necessary)
+  const updatedRows = rows.filter(
+    (row) => row.DiscordTagCache !== row.DiscordTag
+  );
+  for (const row of updatedRows) {
+    // console.log(`[~] ${row.DiscordTag} attempting to update...`);
+    let user = client.users.cache.find((u) =>
+      u.discriminator?.length === 4
+        ? `${u.username}#${u.discriminator}` === row.DiscordTag
+        : u.username === row.DiscordTag.toLowerCase()
     );
+    if (!user) continue;
+
+    row.DiscordId = user.id;
+    row.DiscordTagCache = row.DiscordTag;
+    promises.push(row.save());
   }
+
+  const guild = await client.guilds.fetch(serverId);
+  const members = await guild.members.fetch();
+  const verifiedRole = guild.roles.cache.get(roleId);
+  if (!verifiedRole) {
+    console.error(`Verified role ${roleId} not found in ${guild.name}!`);
+    process.exit(2);
+  }
+
+  const verifiedRoleMembers = verifiedRole.members.map((m) => m.user.id);
+  const sheetVerifiedMembers = rows.map((row) => row.DiscordId);
+  const posDiff = sheetVerifiedMembers.filter(
+    (x) => !verifiedRoleMembers.includes(x)
+  );
+  const negDiff = verifiedRoleMembers.filter(
+    (x) => !sheetVerifiedMembers.includes(x)
+  );
+  for (const userId of posDiff) {
+    await guild.members.cache.get(userId)?.roles.add(verifiedRole);
+  }
+  for (const userId of negDiff) {
+    await guild.members.cache.get(userId)?.roles.remove(verifiedRole);
+  }
+
+  // console.log(
+  //   `Updated ${guild.name} with ${posDiff.length} new members and ${negDiff.length} removed members.`
+  // );
 }
 
 class TransientArray extends Array {
@@ -748,7 +776,9 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
 
   if (
     oldChannel &&
-    config.privateChannelString.some(substring => oldChannel.name.includes(substring)) &&
+    config.privateChannelString.some((substring) =>
+      oldChannel.name.includes(substring)
+    ) &&
     oldChannel.members.size === 0
   ) {
     // User left a channel, and the channel is now empty
@@ -763,7 +793,9 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
 
   if (
     newChannel &&
-    config.privateChannelString.some(substring => newChannel.name.includes(substring)) &&
+    config.privateChannelString.some((substring) =>
+      newChannel.name.includes(substring)
+    ) &&
     newChannel.members.size === 1
   ) {
     // User joined a channel, and is the first to join
