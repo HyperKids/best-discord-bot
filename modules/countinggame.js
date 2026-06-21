@@ -1,4 +1,5 @@
 var fs = require("fs");
+const { MessageType } = require("discord.js");
 
 class CountingGame {
   constructor(configObj, client) {
@@ -14,12 +15,18 @@ class CountingGame {
     this.channel.messages.fetch({ limit: 2 }).then((m) => {
       // [...m] turns the map into an array, [x] grabs the xth element, [1] gets the message element from the spread as the messageID is index 0
       if (!this.isValidNumber(parseInt([...m][0][1].content.split(" ")[0]))) {
-        [...m][0][1].delete({ timeout: 1000 }).then(() => this.init());
+        setTimeout(
+          () => [...m][0][1].delete().then(() => this.init()).catch(console.error),
+          1000
+        );
       } else {
         var ccounter = parseInt([...m][0][1].content.split(" ")[0]);
         var lcounter = parseInt([...m][1][1].content.split(" ")[0]);
         if (parseInt(ccounter) != parseInt(lcounter) + 1) {
-          [...m][0][1].delete({ timeout: 1000 }).then(() => this.init());
+          setTimeout(
+          () => [...m][0][1].delete().then(() => this.init()).catch(console.error),
+          1000
+        );
         } else {
           this.counter = parseInt([...m][0][1].content);
           this.lastUser = [...m][0][1].author.id;
@@ -34,7 +41,7 @@ class CountingGame {
     });
   }
   newMessage(msg) {
-    if (msg.type !== "DEFAULT") return msg.delete();
+    if (msg.type !== MessageType.Default) return msg.delete();
     var inputNum = parseInt(msg.content.split(" ")[0]);
     if (msg.content.indexOf("\n") !== -1) {
       msg.delete();
@@ -47,7 +54,7 @@ class CountingGame {
       msg.delete();
       msg.author.send(
         "Messages need to be less than 256 characters. Your deleted message: `" +
-          sg.content +
+          msg.content +
           "`"
       );
     } else if (!this.isValidNumber(inputNum)) {

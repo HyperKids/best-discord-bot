@@ -13,9 +13,24 @@ if (
 const Discord = require("discord.js");
 const axios = require("axios");
 const fs = require("fs");
-const client = new Discord.Client();
+const client = new Discord.Client({
+  intents: [
+    Discord.GatewayIntentBits.Guilds,
+    Discord.GatewayIntentBits.GuildMembers,
+    Discord.GatewayIntentBits.GuildMessages,
+    Discord.GatewayIntentBits.MessageContent,
+    Discord.GatewayIntentBits.GuildMessageReactions,
+    Discord.GatewayIntentBits.GuildVoiceStates,
+  ],
+  partials: [
+    Discord.Partials.Message,
+    Discord.Partials.Channel,
+    Discord.Partials.Reaction,
+  ],
+});
 const yaml = require("js-yaml");
 const CountingGame = require("./modules/countinggame");
+const publish = require("./modules/publish");
 
 // Keep the bot alive on stray errors instead of killing the process.
 // (Older Node only warned on unhandled rejections; Node 15+ exits by default,
@@ -44,9 +59,17 @@ try {
 
 var countinggames = {};
 
-client.on("ready", async () => {
-  client.user.setActivity("the BEST server!", { type: "WATCHING" });
+client.on("clientReady", async () => {
+  client.user.setActivity("the BEST server!", {
+    type: Discord.ActivityType.Watching,
+  });
   console.log(`Logged in as ${client.user.tag}!`);
+
+  // Register the "Publish to Website" message context-menu command (guild-scoped
+  // so it's available instantly). Idempotent — Discord upserts by name.
+  publish
+    .register(client, "442754791563722762")
+    .catch((err) => console.error("[publish] command registration failed:", err));
 
   // Setup Google Sheets verification system
   await doc.useServiceAccountAuth({
@@ -71,11 +94,14 @@ client.on("ready", async () => {
   }, 1000 * 60 * 5); // 5 minutes
 });
 
-client.on("message", (msg) => {
+client.on("messageCreate", (msg) => {
   if (msg.author.id != "720120584155168771" && countinggames[msg.channel.id]) {
     return countinggames[msg.channel.id].newMessage(msg);
   }
-  if (msg.author.id != "720120584155168771" && msg.type == "DEFAULT") {
+  if (
+    msg.author.id != "720120584155168771" &&
+    msg.type === Discord.MessageType.Default
+  ) {
     if (msg.content.substring(0, 1) == config.prefix) {
       let message = msg.content;
       var args = message.substring(1).split(" ");
@@ -87,15 +113,17 @@ client.on("message", (msg) => {
 
       var serverID = msg.guild.id;
       msg.guild.members.fetch(msg.author.id).then((res) => {
-        var listOfRoles = res._roles;
-        var isPresident = listOfRoles.includes("445482959085240331");
-        var isEboard = listOfRoles.includes("442756821590081537");
-        var isPastEboard = listOfRoles.includes("588114684318580770");
-        var isCaptain = listOfRoles.includes("681557519931408397");
+        var listOfRoles = res.roles.cache;
+        var isPresident = listOfRoles.has("445482959085240331");
+        var isEboard = listOfRoles.has("442756821590081537");
+        var isPastEboard = listOfRoles.has("588114684318580770");
+        var isCaptain = listOfRoles.has("681557519931408397");
 
-        if (msg.author.id == "196685652249673728") {
-          isHyper = true;
-        }
+        // Scoped per command invocation. This was previously an undeclared
+        // global that was only ever set to true and never reset, so the first
+        // time the owner ran any command every later user was treated as the
+        // owner too — a privilege-escalation bug. `let` fixes that.
+        let isHyper = msg.author.id == "196685652249673728";
 
         switch (cmd) {
           // TODO: Add purge command
@@ -119,9 +147,9 @@ client.on("message", (msg) => {
             break;
           case "deafenall":
             if (isHyper) {
-              if (msg.member.voice.sessionID) {
+              if (msg.member.voice.sessionId) {
                 msg.guild.channels.cache
-                  .get(msg.member.voice.channelID)
+                  .get(msg.member.voice.channelId)
                   .members.forEach((member) => {
                     member.voice.setDeaf(true);
                     member.voice.setMute(true);
@@ -133,9 +161,9 @@ client.on("message", (msg) => {
             break;
           case "undeafenall":
             if (isHyper) {
-              if (msg.member.voice.sessionID) {
+              if (msg.member.voice.sessionId) {
                 msg.guild.channels.cache
-                  .get(msg.member.voice.channelID)
+                  .get(msg.member.voice.channelId)
                   .members.forEach((member) => {
                     member.voice.setDeaf(false);
                     member.voice.setMute(false);
@@ -221,7 +249,7 @@ client.on("message", (msg) => {
                   });
               } else {
                 msg.channel.send(
-                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${prefix}react messageid emotename\`.`
+                  `:x: You're missing parameters, or your parameters are invalid. Syntax: \`${config.prefix}react messageid emotename\`.`
                 );
               }
             } else {
@@ -266,18 +294,16 @@ client.on("message", (msg) => {
           case "bc":
             if (isHyper || isPresident || isEboard) {
               msg.channel.send({
-                embed: {
-                  color: 0x2f190e,
-                  title: message.substring(4),
-                  footer: {
-                    icon_url:
-                      "https://cdn.discordapp.com/avatars/" +
-                      userID +
-                      "/" +
-                      bot.users[userID].avatar,
-                    text: "Broadcast issued by " + user,
+                embeds: [
+                  {
+                    color: 0x2f190e,
+                    title: message.substring(4),
+                    footer: {
+                      icon_url: msg.author.displayAvatarURL(),
+                      text: "Broadcast issued by " + msg.author.username,
+                    },
                   },
-                },
+                ],
               });
             } else {
               noperm(msg.channel.id);
@@ -286,10 +312,11 @@ client.on("message", (msg) => {
             break;
           case "embed":
             if (isHyper) {
-              msg.channel.send(
-                "@everyone It is our honor and privilege to announce the 2021-2022 Executive Board! We're looking forward to the new semester with a return to in-person activities! There are many projects in the works, and we're excited about the future of Brown Esports.\n\nBEST,\nIsaac Kim and William Sun\n\u200B",
-                {
-                  embed: {
+              msg.channel.send({
+                content:
+                  "@everyone It is our honor and privilege to announce the 2021-2022 Executive Board! We're looking forward to the new semester with a return to in-person activities! There are many projects in the works, and we're excited about the future of Brown Esports.\n\nBEST,\nIsaac Kim and William Sun\n\u200B",
+                embeds: [
+                  {
                     title:
                       "Announcing the 2021-2022 Brown Esports Executive Board!",
                     description: "Please give them a warm welcome!",
@@ -444,8 +471,8 @@ client.on("message", (msg) => {
                       },
                     ],
                   },
-                } //-changelog |1|2|3|true|5|6|7|true|8|9|true
-              );
+                ],
+              }); //-changelog |1|2|3|true|5|6|7|true|8|9|true
               msg.delete();
             }
             break;
@@ -459,26 +486,30 @@ client.on("message", (msg) => {
   if (msg.content.toLowerCase().includes("you love me")) {
     const emojis = [":person_shrugging:", ":white_check_mark:", ":x:"];
     msg.channel.send({
-      embed: {
-        title: `BEST - Love for You:  ${
-          emojis[Math.floor(Math.random() * emojis.length)]
-        }`,
-      },
+      embeds: [
+        {
+          title: `BEST - Love for You:  ${
+            emojis[Math.floor(Math.random() * emojis.length)]
+          }`,
+        },
+      ],
     });
   }
 });
 
 function noperm(channelID) {
   client.channels.cache.get(channelID).send({
-    embed: {
-      color: 0xc00404,
-      title: ":x:  I'm sorry, but you aren't permitted to do that.",
-      footer: {
-        icon_url:
-          "https://cdn.discordapp.com/icons/442754791563722762/a_ba9348709f6497c2dafc6220097de0ff.gif?size=32",
-        text: "Message automatically generated by BESTBot",
+    embeds: [
+      {
+        color: 0xc00404,
+        title: ":x:  I'm sorry, but you aren't permitted to do that.",
+        footer: {
+          icon_url:
+            "https://cdn.discordapp.com/icons/442754791563722762/a_ba9348709f6497c2dafc6220097de0ff.gif?size=32",
+          text: "Message automatically generated by BESTBot",
+        },
       },
-    },
+    ],
   });
 }
 
@@ -605,7 +636,7 @@ function updateMemberDividers(guildmember) {
       let badgerole = guild.roles.cache.get("828418427970387968"); // badges
       let selrole = guild.roles.cache.get("828490418203131934"); // selected roles
 
-      let rankIds = guildmember._roles;
+      let rankIds = guildmember.roles.cache.map((r) => r.id);
       let rawPositions = guildroles
         .filter(({ id }) => rankIds.includes(id))
         .map(({ rawPosition }) => rawPosition);
@@ -673,7 +704,7 @@ function updateUserColors(guildmember) {
       let badgerole = guild.roles.cache.get("828418427970387968"); // badges
       let selrole = guild.roles.cache.get("828490418203131934"); // selected roles
 
-      let rankIds = guildmember._roles;
+      let rankIds = guildmember.roles.cache.map((r) => r.id);
       let rawPositions = guildroles
         .filter(({ id }) => rankIds.includes(id))
         .map(({ rawPosition }) => rawPosition);
@@ -728,14 +759,22 @@ function updateUserColors(guildmember) {
   });
 }
 
-client.on("messageReactionAdd", (reaction, user) => {
+client.on("messageReactionAdd", async (reaction, user) => {
+  // Reactions on messages not in cache arrive as partials under v14; hydrate.
+  if (reaction.partial) {
+    try {
+      await reaction.fetch();
+    } catch {
+      return;
+    }
+  }
   if (
     bestcolors.map((obj) => obj.messageID).includes(reaction.message.id) &&
     reaction.emoji.name === "🔸"
   ) {
     client.guilds.fetch("442754791563722762").then((guild) => {
       guild.members.fetch(user.id).then((guser) => {
-        let userroles = guser._roles;
+        let userroles = guser.roles.cache.map((r) => r.id);
         if (
           userroles.includes(
             bestcolors.find((obj) => obj.messageID === reaction.message.id).perm
@@ -795,12 +834,12 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
     oldChannel.members.size === 0
   ) {
     // User left a channel, and the channel is now empty
-    oldChannel.updateOverwrite(
+    oldChannel.permissionOverwrites.edit(
       oldChannel.guild.roles.everyone,
       {
-        VIEW_CHANNEL: false,
+        ViewChannel: false,
       },
-      "Voice channel made invisible after last user left"
+      { reason: "Voice channel made invisible after last user left" }
     );
   }
 
@@ -812,14 +851,18 @@ client.on("voiceStateUpdate", (oldUser, newUser) => {
     newChannel.members.size === 1
   ) {
     // User joined a channel, and is the first to join
-    newChannel.updateOverwrite(
+    newChannel.permissionOverwrites.edit(
       newChannel.guild.roles.everyone,
       {
-        VIEW_CHANNEL: null,
+        ViewChannel: null,
       },
-      "Voice channel made visible after user joined"
+      { reason: "Voice channel made visible after user joined" }
     );
   }
 });
+
+client.on("interactionCreate", (interaction) =>
+  publish.handleInteraction(interaction)
+);
 
 client.login(process.env.DISCORDBOTTOKEN);
