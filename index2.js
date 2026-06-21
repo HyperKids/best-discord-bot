@@ -17,6 +17,17 @@ const client = new Discord.Client();
 const yaml = require("js-yaml");
 const CountingGame = require("./modules/countinggame");
 
+// Keep the bot alive on stray errors instead of killing the process.
+// (Older Node only warned on unhandled rejections; Node 15+ exits by default,
+// and an uncaught exception always exits. Log and continue so a transient
+// Google Sheets / Discord gateway error doesn't take the whole bot down.)
+process.on("unhandledRejection", (err) =>
+  console.error("[unhandledRejection]", err)
+);
+process.on("uncaughtException", (err) =>
+  console.error("[uncaughtException]", err)
+);
+
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const doc = new GoogleSpreadsheet(process.env.GOOGLE_SPREADSHEET);
 
@@ -507,8 +518,10 @@ async function updateVerifiedStudents() {
   const members = await guild.members.fetch();
   const verifiedRole = guild.roles.cache.get(roleId);
   if (!verifiedRole) {
-    console.error(`Verified role ${roleId} not found in ${guild.name}!`);
-    process.exit(2);
+    console.error(
+      `Verified role ${roleId} not found in ${guild.name}! Skipping this cycle.`
+    );
+    return;
   }
 
   const verifiedRoleMembers = verifiedRole.members.map((m) => m.user.id);
