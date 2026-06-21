@@ -132,6 +132,31 @@ async function fetchProfiles() {
   );
 }
 
+// Find the single profile linked to a Discord user id (for auto-matching the
+// original poster). Returns null if none.
+async function findProfileByDiscordId(discordId) {
+  if (!discordId) return null;
+  const client = await getClient();
+  return client.fetch(
+    '*[_type=="profile" && discordId==$id][0]{_id,firstName,lastName,discordId}',
+    { id: discordId }
+  );
+}
+
+// Type-to-search by name. Matches the first typed token as a prefix against
+// firstName or lastName; capped at 25 (Discord select limit).
+async function searchProfiles(query) {
+  const q = String(query || "").trim();
+  if (!q) return [];
+  const first = q.split(/\s+/)[0].replace(/[^\p{L}\p{N}'-]/gu, "");
+  if (!first) return [];
+  const client = await getClient();
+  return client.fetch(
+    '*[_type=="profile" && (firstName match $q || lastName match $q)] | order(firstName asc) [0...25] {_id,firstName,lastName,discordId}',
+    { q: first + "*" }
+  );
+}
+
 // Create a new author profile, tagging it with the Discord id of the original
 // poster so future publishes auto-match them.
 async function createProfile({ firstName, lastName, discordId }) {
@@ -219,6 +244,8 @@ module.exports = {
   profileName,
   toPortableText,
   fetchProfiles,
+  findProfileByDiscordId,
+  searchProfiles,
   createProfile,
   uploadImageFromUrl,
   publishArticle,

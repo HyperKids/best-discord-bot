@@ -5,10 +5,12 @@
 //   1. Right-click a message -> Apps -> Brown Esports -> "Publish to Website"
 //   2. Permission gate: President role OR the owner user id.
 //   3. A modal collects Title / Subtitle / Body / Publish date (prefilled from
-//      the message). Discord modals can't hold dropdowns, so...
-//   4. ...an ephemeral follow-up message carries an author <select> (required,
-//      from existing Sanity profiles + "Create new"), a category <select>, and
-//      Publish / Cancel buttons.
+//      the message; date is a clean YYYY-MM-DD).
+//   4. An ephemeral review message shows a human-readable summary plus:
+//        - the author (auto-matched from the poster's Discord id when possible)
+//        - a "Search author" button (type-to-search by name -> pick from matches)
+//          and a "Create new author" button — author is required
+//        - a category select, and Publish / Cancel buttons
 //   5. Publish uploads any image attachment + writes the `article` to Sanity.
 
 const {
@@ -52,84 +54,124 @@ async function isAllowed(interaction) {
   }
 }
 
-function normalizeDate(raw, fallbackTs) {
-  if (raw) {
-    const d = new Date(raw.length <= 10 ? raw + "T12:00:00Z" : raw);
-    if (!isNaN(d.getTime())) return d.toISOString();
+// Display a stored ISO timestamp as e.g. "June 21, 2026" (the site shows the
+// date only anyway). UTC so the calendar day never shifts.
+function humanDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  } catch {
+    return iso;
   }
-  if (fallbackTs) return new Date(fallbackTs).toISOString();
-  return new Date().toISOString();
 }
 
-// Build the ephemeral review message (content + components). Caller adds the
-// ephemeral flag on the initial reply; update() calls reuse it as-is.
+// Turn the user's date input back into an ISO timestamp. Prefer a clean
+// YYYY-MM-DD; if it equals the message's own date we keep the message's precise
+// time (preserves intra-day ordering), otherwise noon UTC. Full ISO is accepted
+// too if someone pastes one.
+function resolveDate(raw, originalIso) {
+  const origDateOnly = originalIso ? originalIso.slice(0, 10) : null;
+  const s = (raw || "").trim();
+  if (s) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      if (s === origDateOnly && originalIso) return originalIso;
+      const d = new Date(s + "T12:00:00Z");
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  return originalIso || new Date().toISOString();
+}
+
+// Build the ephemeral review message (content + components).
 function buildReviewMessage(token) {
   const s = pending.get(token);
-  const lines = [
+  const lines = [];
+  if (s.searchNote) lines.push(s.searchNote, "");
+  lines.push(
     "**Review before publishing to brownesports.org:**",
     `• **Title:** ${s.title}`,
-    s.subtitle ? `• **Subtitle:** ${s.subtitle}` : null,
-    `• **Publish date:** ${s.publishDate}`,
-    `• **Author:** ${s.authorLabel || "_none selected — required_"}`,
+    ...(s.subtitle ? [`• **Subtitle:** ${s.subtitle}`] : []),
+    `• **Publish date:** ${humanDate(s.publishDate)}`,
+    `• **Author:** ${
+      s.authorLabel
+        ? `**${s.authorLabel}**`
+        : "⚠️ _not set — use 🔍 Search or ➕ Create below (required)_"
+    }`,
     `• **Category:** ${s.tag}`,
     `• **Image:** ${s.imageUrl ? "attached from message ✅" : "none"}`,
-    `• **Body:** ${s.body.length} chars`,
-  ].filter(Boolean);
-
-  // Author select — matched/selected author first, then alphabetical, capped at
-  // 24 (Discord allows 25 options; we reserve one for "Create new").
-  const profiles = (s.profiles || []).slice().sort((a, b) => {
-    if (a._id === s.authorId) return -1;
-    if (b._id === s.authorId) return 1;
-    return sanity.profileName(a).localeCompare(sanity.profileName(b));
-  });
-  const authorOptions = profiles.slice(0, 24).map((p) =>
-    new StringSelectMenuOptionBuilder()
-      .setLabel(sanity.profileName(p).slice(0, 100))
-      .setValue(p._id)
-      .setDefault(p._id === s.authorId)
+    `• **Body:** ${s.body.length} chars`
   );
-  authorOptions.push(
-    new StringSelectMenuOptionBuilder()
-      .setLabel("➕ Create new author…")
-      .setValue("__create__")
-  );
-  const authorSelect = new StringSelectMenuBuilder()
-    .setCustomId(`publish_author:${token}`)
-    .setPlaceholder("Select author (required)")
-    .addOptions(authorOptions);
 
-  const tagSelect = new StringSelectMenuBuilder()
-    .setCustomId(`publish_tag:${token}`)
-    .setPlaceholder("Select category")
-    .addOptions(
-      Object.keys(sanity.TAGS).map((name) =>
-        new StringSelectMenuOptionBuilder()
-          .setLabel(name)
-          .setValue(name)
-          .setDefault(name === s.tag)
+  const rows = [];
+
+  // Search-results select — only present right after a name search returns >1.
+  if (s.searchResults && s.searchResults.length) {
+    const opts = s.searchResults.slice(0, 25).map((p) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(sanity.profileName(p).slice(0, 100))
+        .setDescription(p.discordId ? "has a Discord ID" : "no Discord ID")
+        .setValue(p._id)
+        .setDefault(p._id === s.authorId)
+    );
+    rows.push(
+      new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId(`publish_pickauthor:${token}`)
+          .setPlaceholder(`Pick the author (${s.searchResults.length} match${s.searchResults.length === 1 ? "" : "es"})`)
+          .addOptions(opts)
       )
     );
+  }
 
-  const buttons = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`publish_go:${token}`)
-      .setLabel("Publish")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(`publish_cancel:${token}`)
-      .setLabel("Cancel")
-      .setStyle(ButtonStyle.Secondary)
+  rows.push(
+    new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`publish_tag:${token}`)
+        .setPlaceholder("Select category")
+        .addOptions(
+          Object.keys(sanity.TAGS).map((name) =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(name)
+              .setValue(name)
+              .setDefault(name === s.tag)
+          )
+        )
+    )
   );
 
-  return {
-    content: lines.join("\n"),
-    components: [
-      new ActionRowBuilder().addComponents(authorSelect),
-      new ActionRowBuilder().addComponents(tagSelect),
-      buttons,
-    ],
-  };
+  rows.push(
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`publish_searchauthor:${token}`)
+        .setLabel("🔍 Search author")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId(`publish_newauthorbtn:${token}`)
+        .setLabel("➕ Create new author")
+        .setStyle(ButtonStyle.Secondary)
+    )
+  );
+
+  rows.push(
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`publish_go:${token}`)
+        .setLabel("Publish")
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`publish_cancel:${token}`)
+        .setLabel("Cancel")
+        .setStyle(ButtonStyle.Secondary)
+    )
+  );
+
+  return { content: lines.join("\n"), components: rows };
 }
 
 // ---- command registration (call on ready) ----
@@ -155,16 +197,15 @@ async function onContextMenu(interaction) {
   const token = msg.id;
   const content = msg.content || "";
   const firstLine = content.split("\n").find((l) => l.trim()) || "";
+  const originalIso = new Date(msg.createdTimestamp).toISOString();
 
-  // Stash the target so the modal submit can recover author/date even if the
-  // message is later edited/deleted.
   pending.set(token, {
     target: {
       channelId: interaction.channelId,
       messageId: msg.id,
       authorDiscordId: msg.author.id,
       authorName: msg.author.username,
-      messageTs: msg.createdTimestamp,
+      originalIso,
     },
   });
   scheduleCleanup(token);
@@ -205,8 +246,8 @@ async function onContextMenu(interaction) {
         .setLabel("Publish date")
         .setStyle(TextInputStyle.Short)
         .setRequired(true)
-        .setPlaceholder("2026-06-21T15:00:00Z")
-        .setValue(new Date(msg.createdTimestamp).toISOString())
+        .setPlaceholder("YYYY-MM-DD")
+        .setValue(originalIso.slice(0, 10))
     )
   );
   await interaction.showModal(modal);
@@ -224,7 +265,7 @@ async function onModalSubmit(interaction) {
   const subtitle = (interaction.fields.getTextInputValue("subtitle") || "").trim();
   const body = interaction.fields.getTextInputValue("body");
   const rawDate = (interaction.fields.getTextInputValue("publishDate") || "").trim();
-  const publishDate = normalizeDate(rawDate, target.messageTs);
+  const publishDate = resolveDate(rawDate, target.originalIso);
 
   // Re-fetch the message for its image attachment + author (best-effort).
   let imageUrl = null;
@@ -247,15 +288,14 @@ async function onModalSubmit(interaction) {
     console.error("[publish] could not re-fetch target message:", e.message);
   }
 
-  let profiles = [];
+  // Auto-match the original poster to a profile by Discord id (targeted query,
+  // not the full 92-profile list).
+  let matched = null;
   try {
-    profiles = await sanity.fetchProfiles();
+    matched = await sanity.findProfileByDiscordId(authorDiscordId);
   } catch (e) {
-    console.error("[publish] fetchProfiles failed:", e.message);
+    console.error("[publish] findProfileByDiscordId failed:", e.message);
   }
-  const matched = profiles.find(
-    (p) => p.discordId && authorDiscordId && p.discordId === authorDiscordId
-  );
 
   pending.set(token, {
     target,
@@ -266,10 +306,13 @@ async function onModalSubmit(interaction) {
     authorDiscordId,
     imageUrl,
     imageName,
-    profiles,
     authorId: matched ? matched._id : null,
     authorLabel: matched ? sanity.profileName(matched) : null,
     tag: "Announcements",
+    searchResults: null,
+    searchNote: matched
+      ? `✅ Auto-matched author by Discord ID: **${sanity.profileName(matched)}**. Change it below if needed.`
+      : null,
   });
   scheduleCleanup(token);
 
@@ -279,8 +322,66 @@ async function onModalSubmit(interaction) {
   });
 }
 
-// ---- step 3a: author select ----
-async function onAuthorSelect(interaction) {
+// ---- author: "Search author" button -> name modal ----
+async function onSearchAuthorButton(interaction) {
+  const token = interaction.customId.split(":")[1];
+  if (!pending.get(token))
+    return interaction.update({
+      content: "⌛ This publish session expired. Re-run the command.",
+      components: [],
+    });
+  const modal = new ModalBuilder()
+    .setCustomId(`publish_searchmodal:${token}`)
+    .setTitle("Find author");
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId("q")
+        .setLabel("Author name")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setPlaceholder("Type a first or last name, e.g. Isaac")
+    )
+  );
+  return interaction.showModal(modal);
+}
+
+// ---- author: name modal submitted -> search + render matches ----
+async function onSearchModalSubmit(interaction) {
+  const token = interaction.customId.split(":")[1];
+  const s = pending.get(token);
+  if (!s)
+    return interaction.reply({
+      content: "⌛ This publish session expired. Re-run the command.",
+      flags: MessageFlags.Ephemeral,
+    });
+  const q = interaction.fields.getTextInputValue("q").trim();
+
+  let results = [];
+  try {
+    results = await sanity.searchProfiles(q);
+  } catch (e) {
+    console.error("[publish] searchProfiles failed:", e.message);
+  }
+
+  if (!results.length) {
+    s.searchResults = null;
+    s.searchNote = `🔎 No profiles match “${q}”. Try a different spelling, or ➕ Create new author.`;
+  } else if (results.length === 1) {
+    s.authorId = results[0]._id;
+    s.authorLabel = sanity.profileName(results[0]);
+    s.searchResults = null;
+    s.searchNote = `✅ Author set to **${s.authorLabel}** (only match for “${q}”).`;
+  } else {
+    s.searchResults = results;
+    s.searchNote = `🔎 ${results.length} matches for “${q}” — pick one below.`;
+  }
+  // Modal shown from a message component (the search button) -> update() is valid.
+  return interaction.update(buildReviewMessage(token));
+}
+
+// ---- author: pick from the search-results select ----
+async function onPickAuthorSelect(interaction) {
   const token = interaction.customId.split(":")[1];
   const s = pending.get(token);
   if (!s)
@@ -288,38 +389,46 @@ async function onAuthorSelect(interaction) {
       content: "⌛ This publish session expired. Re-run the command.",
       components: [],
     });
-
-  const value = interaction.values[0];
-  if (value === "__create__") {
-    const modal = new ModalBuilder()
-      .setCustomId(`publish_newauthor:${token}`)
-      .setTitle("New author");
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId("firstName")
-          .setLabel("First name")
-          .setStyle(TextInputStyle.Short)
-          .setRequired(true)
-      ),
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId("lastName")
-          .setLabel("Last name (optional)")
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false)
-      )
-    );
-    return interaction.showModal(modal);
-  }
-
-  s.authorId = value;
-  const p = (s.profiles || []).find((x) => x._id === value);
-  s.authorLabel = p ? sanity.profileName(p) : value;
+  const id = interaction.values[0];
+  const p = (s.searchResults || []).find((x) => x._id === id);
+  s.authorId = id;
+  s.authorLabel = p ? sanity.profileName(p) : id;
+  s.searchResults = null;
+  s.searchNote = `✅ Author set to **${s.authorLabel}**.`;
   return interaction.update(buildReviewMessage(token));
 }
 
-// ---- step 3b: "create new author" modal submitted ----
+// ---- author: "Create new author" button -> name modal ----
+async function onNewAuthorButton(interaction) {
+  const token = interaction.customId.split(":")[1];
+  if (!pending.get(token))
+    return interaction.update({
+      content: "⌛ This publish session expired. Re-run the command.",
+      components: [],
+    });
+  const modal = new ModalBuilder()
+    .setCustomId(`publish_newauthor:${token}`)
+    .setTitle("New author");
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId("firstName")
+        .setLabel("First name")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId("lastName")
+        .setLabel("Last name (optional)")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+    )
+  );
+  return interaction.showModal(modal);
+}
+
+// ---- author: "Create new author" modal submitted -> create profile ----
 async function onNewAuthorModal(interaction) {
   const token = interaction.customId.split(":")[1];
   const s = pending.get(token);
@@ -338,14 +447,12 @@ async function onNewAuthorModal(interaction) {
   });
   s.authorId = created._id;
   s.authorLabel = [firstName, lastName].filter(Boolean).join(" ");
-  s.profiles = [
-    ...(s.profiles || []),
-    { _id: created._id, firstName, lastName, discordId: s.authorDiscordId },
-  ];
+  s.searchResults = null;
+  s.searchNote = `✅ Created and selected **${s.authorLabel}**.`;
   return interaction.update(buildReviewMessage(token));
 }
 
-// ---- step 3c: category select ----
+// ---- category select ----
 async function onTagSelect(interaction) {
   const token = interaction.customId.split(":")[1];
   const s = pending.get(token);
@@ -358,7 +465,7 @@ async function onTagSelect(interaction) {
   return interaction.update(buildReviewMessage(token));
 }
 
-// ---- step 4: Publish ----
+// ---- Publish ----
 async function onPublish(interaction) {
   const token = interaction.customId.split(":")[1];
   const s = pending.get(token);
@@ -369,7 +476,8 @@ async function onPublish(interaction) {
     });
   if (!s.authorId) {
     return interaction.reply({
-      content: "⚠️ Please choose an author first — it's required.",
+      content:
+        "⚠️ Please set an author first — use 🔍 Search author or ➕ Create new author. It's required.",
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -392,7 +500,7 @@ async function onPublish(interaction) {
     pending.delete(token);
     await interaction.editReply({
       content:
-        `✅ Published **${s.title}** as ${s.authorLabel}.\n` +
+        `✅ Published **${s.title}** as ${s.authorLabel} (${humanDate(s.publishDate)}).\n` +
         `🔗 ${result.siteUrl}\n` +
         `✏️ Edit in Studio: ${result.studioUrl}\n\n` +
         `_The site fetches from Sanity's CDN, so it may take a minute to appear._`,
@@ -431,15 +539,18 @@ async function handleInteraction(interaction) {
     }
     if (interaction.isModalSubmit && interaction.isModalSubmit()) {
       if (interaction.customId.startsWith("publish_modal:")) return await onModalSubmit(interaction);
+      if (interaction.customId.startsWith("publish_searchmodal:")) return await onSearchModalSubmit(interaction);
       if (interaction.customId.startsWith("publish_newauthor:")) return await onNewAuthorModal(interaction);
       return;
     }
     if (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) {
-      if (interaction.customId.startsWith("publish_author:")) return await onAuthorSelect(interaction);
       if (interaction.customId.startsWith("publish_tag:")) return await onTagSelect(interaction);
+      if (interaction.customId.startsWith("publish_pickauthor:")) return await onPickAuthorSelect(interaction);
       return;
     }
     if (interaction.isButton && interaction.isButton()) {
+      if (interaction.customId.startsWith("publish_searchauthor:")) return await onSearchAuthorButton(interaction);
+      if (interaction.customId.startsWith("publish_newauthorbtn:")) return await onNewAuthorButton(interaction);
       if (interaction.customId.startsWith("publish_go:")) return await onPublish(interaction);
       if (interaction.customId.startsWith("publish_cancel:")) return await onCancel(interaction);
       return;
